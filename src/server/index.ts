@@ -90,34 +90,34 @@ app.get("/og-image.svg", async (req, res) => {
 
   const initial = displayName.trim()[0]?.toUpperCase() ?? "P";
 
-  // Exact match: green bg, red circle top-left partially cut (center at ~148,0),
-  // black rounded rect top-right partially cut, bold name bottom-left
+  // Scale down the display name's font size if it's long, so it never overflows the 1200-wide canvas
+  const nameFontSize = displayName.length > 10 ? Math.max(60, Math.round(1230 / displayName.length)) : 123;
+
+  // Pixel-matched to the reference sample image via sub-pixel circle-fit + cap-height measurement (scaled to a 1200x630 canvas)
   const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <!-- Green background -->
-  <rect width="1200" height="630" fill="#00D632"/>
+  <rect width="1200" height="630" fill="#00DC13"/>
 
-  <!-- Red/coral circle top-left, partially cut off at top -->
-  <circle cx="155" cy="0" r="195" fill="#FF3B30"/>
-  <!-- First letter centered in visible circle area -->
-  <text x="155" y="135"
+  <!-- Red circle top-left, partially cut off at top -->
+  <circle cx="161.4" cy="51.2" r="102.5" fill="#FE0000"/>
+  <!-- First letter centered in the circle -->
+  <text x="161.4" y="51.2"
     font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
-    font-size="160" font-weight="900" fill="white"
+    font-size="117" font-weight="900" fill="white"
     text-anchor="middle" dominant-baseline="middle">${initial}</text>
 
-  <!-- Black rounded square top-right, cut off at top and right edges -->
-  <rect x="1030" y="-45" width="240" height="240" rx="48" fill="#0B0B0B"/>
-  <!-- Transparent $ green outline inside black square -->
-  <text x="1150" y="150"
-    font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
-    font-size="148" font-weight="700"
-    fill="none" stroke="#00D632" stroke-width="3"
-    text-anchor="middle" dominant-baseline="middle">$</text>
+  <!-- Black rounded square top-right, cut off at top -->
+  <rect x="1020.2" y="-42.3" width="121.7" height="121.7" rx="22.4" fill="#000000"/>
+  <!-- Solid green $ sign (exact traced shape) inside the black square -->
+  <g transform="translate(1061.74, 2) scale(0.0941)" fill="#00DC13">
+    <path d="M 347 2 L 341 0 L 262 0 L 256 2 L 250 7 L 247 13 L 237 64 L 235 66 L 200 70 L 174 76 L 151 84 L 127 96 L 106 111 L 88 129 L 75 148 L 67 165 L 61 185 L 58 203 L 59 244 L 67 273 L 77 292 L 85 303 L 110 327 L 145 349 L 184 366 L 254 392 L 277 404 L 293 418 L 300 434 L 299 456 L 294 468 L 286 478 L 273 488 L 261 494 L 240 500 L 224 502 L 196 502 L 173 499 L 146 492 L 126 484 L 106 473 L 88 460 L 72 445 L 63 441 L 57 441 L 48 445 L 4 489 L 0 500 L 3 512 L 28 535 L 46 548 L 67 560 L 96 573 L 120 580 L 123 583 L 112 634 L 112 644 L 114 650 L 124 658 L 208 659 L 215 656 L 222 647 L 231 600 L 234 593 L 267 589 L 297 582 L 324 572 L 345 561 L 369 544 L 384 529 L 401 505 L 411 483 L 419 450 L 419 409 L 412 381 L 403 363 L 392 348 L 372 329 L 344 310 L 297 288 L 235 266 L 202 251 L 187 240 L 180 232 L 173 216 L 174 196 L 182 181 L 196 169 L 224 159 L 238 157 L 268 157 L 294 161 L 312 166 L 349 182 L 391 211 L 401 211 L 407 208 L 448 166 L 452 158 L 452 150 L 448 141 L 441 134 L 401 106 L 374 92 L 346 81 L 345 78 L 357 23 L 356 13 L 353 7 Z"/>
+  </g>
 
   <!-- Display name - bold, large, bottom-left, black -->
-  <text x="56" y="570"
+  <text x="63" y="614"
     font-family="SF Pro Display, Helvetica Neue Black, Arial Black, Arial, sans-serif"
-    font-size="96" font-weight="900" fill="#000000"
-    letter-spacing="-2">${displayName}</text>
+    font-size="${nameFontSize}" font-weight="900" fill="#000000"
+    letter-spacing="-3">${displayName}</text>
 </svg>`;
 
   res.setHeader("Content-Type", "image/svg+xml");
