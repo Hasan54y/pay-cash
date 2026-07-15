@@ -1,3 +1,4 @@
+import { registerPush } from "./../push";
 import QRCanvas from "./../QRCanvas";
 import { downloadQRCard } from "./../qrRenderer";
 import { useState, useEffect, useRef } from "react";
@@ -34,15 +35,13 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState("");
   const [tab, setTab] = useState<Tab>("home");
 
-  useEffect(() => {
-    if (authed && "Notification" in window && Notification.permission === "default") Notification.requestPermission();
-  }, [authed]);
+  useEffect(() => { if (authed) registerPush(null); }, [authed]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
     const r = await fetch("/api/admin/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
     const d = await r.json() as { valid: boolean };
-    if (d.valid) { setAuthed(true); localStorage.setItem("admin_pw", pw); } else setAuthError("Incorrect password");
+    if (d.valid) { setAuthed(true); localStorage.setItem("admin_pw", pw); registerPush(null); } else setAuthError("Incorrect password");
   }
 
   if (!authed) return (

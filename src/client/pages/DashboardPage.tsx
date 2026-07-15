@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import QRCanvas from "./../QRCanvas";
 import { downloadQRCard } from "./../qrRenderer";
+import { registerPush } from "./../push";
 
 type Tab = "home" | "payments" | "paypage" | "settings";
 
@@ -39,6 +40,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
     fetchAll();
+    // Register push with user id from token
+    registerPush(token);
     const iv = setInterval(fetchAll, 30000);
     return () => clearInterval(iv);
   }, []);
