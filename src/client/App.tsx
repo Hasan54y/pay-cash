@@ -5,15 +5,11 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 
-function RedirectToAdmin() {
-  return <Navigate to="/admin" replace />;
-}
-
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<RedirectToAdmin />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

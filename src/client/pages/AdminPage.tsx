@@ -94,9 +94,10 @@ function HomeTab({ pw }: { pw: string }) {
   const [data, setData] = useState<AdminData | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState("");
+  const [adminUsername, setAdminUsername] = useState("");
   const [copied, setCopied] = useState(false);
   const prevPaidCount = useRef(0);
-  const payLink = `https://pay-cash.shop`;
+  const payLink = adminUsername ? `https://pay-cash.shop/pay/${adminUsername}` : `https://pay-cash.shop`;
 
   async function fetchData() {
     const r = await fetch("/api/admin/payments", { headers: { "x-admin-password": pw } });
@@ -111,7 +112,10 @@ function HomeTab({ pw }: { pw: string }) {
   }
 
   useEffect(() => {
-    fetch("/api/public").then(r => r.json()).then((d: { displayName?: string }) => setDisplayName(d.displayName ?? ""));
+    fetch("/api/public").then(r => r.json()).then((d: { displayName?: string; username?: string }) => {
+      setDisplayName(d.displayName ?? "");
+      setAdminUsername(d.username ?? "");
+    });
     fetchData();
     fetch("/api/admin/speed-balance", { headers: { "x-admin-password": pw } }).then(r => r.json()).then((d: { balanceUsd?: number }) => setWalletBalance(d.balanceUsd ?? 0)).catch(() => {});
     const iv = setInterval(fetchData, 30000);
@@ -592,6 +596,11 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
           <div style={{ background: "#fff", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>Profile</p>
             <div><label style={lStyle}>Display Name</label><input style={iStyle} value={settings.displayName} onChange={e => setSettings(p => ({ ...p, displayName: e.target.value }))} /></div>
+            <div>
+              <label style={lStyle}>Username (your payment page URL)</label>
+              <input style={iStyle} value={settings.username} onChange={e => setSettings(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} placeholder="queen" />
+              {settings.username && <p style={{ fontSize: 12, color: "#00C853", marginTop: 4 }}>pay-cash.shop/pay/{settings.username}</p>}
+            </div>
             <div><label style={lStyle}>Recovery Email</label><input style={iStyle} type="email" value={settings.email} onChange={e => setSettings(p => ({ ...p, email: e.target.value }))} /></div>
             <div><label style={lStyle}>New Password</label><input style={iStyle} type="password" placeholder="Leave blank to keep" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
           </div>

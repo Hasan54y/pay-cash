@@ -151,11 +151,24 @@ app.post("/api/auth/login", async (req, res) => {
 
 // ── Public Payment Page ──
 app.get("/api/pay/:username", async (req, res) => {
+  const slug = req.params.username;
+
+  // Check sub-admin users first
   const [user] = await db.select({
     displayName: usersTable.displayName, username: usersTable.username, id: usersTable.id
-  }).from(usersTable).where(and(eq(usersTable.username, req.params.username), eq(usersTable.status, "active")));
-  if (!user) { res.status(404).json({ error: "Not found" }); return; }
-  res.json({ displayName: user.displayName, username: user.username, id: user.id });
+  }).from(usersTable).where(and(eq(usersTable.username, slug), eq(usersTable.status, "active")));
+
+  if (user) { res.json({ displayName: user.displayName, username: user.username, id: user.id }); return; }
+
+  // Check if it matches admin username
+  const adminUsername = (await getSetting("admin_username")) ?? "";
+  if (adminUsername && slug === adminUsername) {
+    const displayName = (await getSetting("display_name")) ?? "Pay Cash";
+    res.json({ displayName, username: adminUsername, id: null });
+    return;
+  }
+
+  res.status(404).json({ error: "Not found" });
 });
 
 // Also keep /api/public for main admin page
