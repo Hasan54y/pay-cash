@@ -175,14 +175,21 @@ function HomeTab({ pw }: { pw: string }) {
           <p style={{ fontSize: 13, color: "#8e8e93", textAlign: "center", margin: "0 0 12px" }}>Scan to pay with cash app</p>
           <div style={{ display: "flex", gap: 12, alignItems: "stretch" }}>
             <div style={{ background: "#f5f5f7", borderRadius: 12, padding: 8, flexShrink: 0 }}>
-              <QRCanvas payLink={payLink} size={120} />
+              <QRCanvas data={payLink} size={120} />
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
-              <p style={{ fontSize: 12, color: "#888", margin: 0, wordBreak: "break-all" }}>pay-cash.shop</p>
+              <p style={{ fontSize: 11, color: "#888", margin: 0, wordBreak: "break-all" }}>
+                {adminUsername ? `pay-cash.shop/pay/${adminUsername}` : "Set username in Settings"}
+              </p>
               <button onClick={() => { navigator.clipboard.writeText(payLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                 style={{ background: "#111", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                 {copied ? "Copied!" : "Copy Link"}
+              </button>
+              <button onClick={() => downloadQRCard(payLink, displayName)}
+                style={{ background: "#f5f5f7", border: "none", borderRadius: 10, color: "#111", fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download QR
               </button>
             </div>
           </div>

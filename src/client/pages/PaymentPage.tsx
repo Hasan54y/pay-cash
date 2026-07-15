@@ -179,8 +179,7 @@ export default function PaymentPage() {
           <div style={{ textAlign: "center", padding: "18px 0 10px" }}>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: "#111" }}>{displayName ? `Pay ${displayName}` : "Pay"}</h1>
             <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#e6f9ee", color: "#00a652", fontSize: 13, fontWeight: 600, borderRadius: 20, padding: "4px 12px" }}>
-                🔒 Secure Payment
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#e6f9ee", color: "#00a652", fontSize: 13, fontWeight: 600, borderRadius: 20, padding: "4px 12px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Secure Payment
               </span>
             </div>
           </div>
@@ -212,7 +211,7 @@ export default function PaymentPage() {
           {error && <p style={{ color: "#ef4444", fontSize: 13, textAlign: "center", margin: "0 20px 10px" }}>{error}</p>}
           <button onClick={handlePay} disabled={!valid || loading}
             style={{ width: "calc(100% - 40px)", margin: "0 20px 14px", background: valid && !loading ? "#00C853" : "#aaa", border: "none", borderRadius: 50, color: "#fff", fontSize: 18, fontWeight: 700, padding: "18px 0", cursor: valid && !loading ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            {loading ? <><div style={{ width: 18, height: 18, border: "3px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />Generating…</> : "🔒 Pay Now →"}
+            {loading ? <><div style={{ width: 18, height: 18, border: "3px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />Generating…</> : "Pay Now →"}
           </button>
           <p style={{ textAlign: "center", color: "#aaa", fontSize: 12 }}>Powered by <strong style={{ color: "#555" }}>Cashapp</strong></p>
         </div>
