@@ -155,7 +155,7 @@ app.get("/api/pay/:username", async (req, res) => {
     displayName: usersTable.displayName, username: usersTable.username, id: usersTable.id
   }).from(usersTable).where(and(eq(usersTable.username, req.params.username), eq(usersTable.status, "active")));
   if (!user) { res.status(404).json({ error: "Not found" }); return; }
-  res.json({ displayName: user.displayName, username: user.username });
+  res.json({ displayName: user.displayName, username: user.username, id: user.id });
 });
 
 // Also keep /api/public for main admin page
@@ -280,13 +280,19 @@ app.get("/api/dashboard/payments", async (req, res) => {
 
   const rows = await db.select().from(paymentsTable)
     .where(eq(paymentsTable.userId, user.id))
-    .orderBy(desc(paymentsTable.createdAt)).limit(10);
+    .orderBy(desc(paymentsTable.createdAt)).limit(100);
 
-  res.json(rows.map((r) => ({
-    ...r, amountUsd: parseFloat(String(r.amountUsd)),
-    amountSats: parseInt(String(r.amountSats)),
-    createdAt: r.createdAt.toISOString(), paidAt: r.paidAt?.toISOString() ?? null,
-  })));
+  const [totalRow] = await db.select({ total: sql<string>`coalesce(sum(${paymentsTable.amountUsd}::numeric),0)` })
+    .from(paymentsTable).where(and(eq(paymentsTable.userId, user.id), eq(paymentsTable.status, "paid")));
+
+  res.json({
+    payments: rows.map((r) => ({
+      ...r, amountUsd: parseFloat(String(r.amountUsd)),
+      amountSats: parseInt(String(r.amountSats)),
+      createdAt: r.createdAt.toISOString(), paidAt: r.paidAt?.toISOString() ?? null,
+    })),
+    totalRevenue: parseFloat(String(totalRow?.total ?? "0")),
+  });
 });
 
 app.post("/api/dashboard/withdraw", async (req, res) => {
