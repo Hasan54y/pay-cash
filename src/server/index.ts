@@ -61,7 +61,7 @@ async function sendPushNotification(userId: string | null, title: string, body: 
 
     const query = userId
       ? db.select().from(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.userId, userId))
-      : db.select().from(pushSubscriptionsTable);
+      : db.select().from(pushSubscriptionsTable).where(sql`${pushSubscriptionsTable.userId} IS NULL`);
 
     const subs = await query;
     for (const sub of subs) {
