@@ -560,9 +560,7 @@ app.post("/api/admin/sync", async (req, res) => {
       const p = await r.json() as { status?: string };
       if (["paid","completed","confirmed"].includes((p.status ?? "").toLowerCase())) {
         await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() }).where(eq(paymentsTable.id, row.id));
-        if (row.userId) {
-          await db.update(usersTable).set({ balance: sql`${usersTable.balance}::numeric + ${row.amountUsd}` }).where(eq(usersTable.id, row.userId));
-        }
+        
         const client = sseClients.get(row.id);
         if (client) { client.write(`data: ${JSON.stringify({ status: "paid" })}\n\n`); sseClients.delete(row.id); }
         updated++;
