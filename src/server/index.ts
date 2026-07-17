@@ -274,7 +274,7 @@ app.post("/api/webhook/speed", async (req, res) => {
 
   if (isPaid && paymentId) {
     const result = await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() })
-      .where(eq(paymentsTable.id, paymentId)).returning();
+      .where(and(eq(paymentsTable.id, paymentId), eq(paymentsTable.status, "pending"))).returning();
     if (result.length > 0) {
       const p = result[0];
       const amount = parseFloat(String(p.amountUsd));
