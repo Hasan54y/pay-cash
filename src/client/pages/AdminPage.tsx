@@ -15,7 +15,7 @@ type Tab = "home" | "payments" | "users" | "withdrawals" | "settings";
 
 interface Payment { id: string; shortId: string; amountUsd: number; amountSats: number; status: string; createdAt: string; paidAt: string | null; checkedBy: string | null; lightningInvoice: string; subadminName: string | null; subadminUsername: string | null; }
 interface AdminData { payments: Payment[]; totalRevenue: number; }
-interface User { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; status: string; createdAt: string; }
+interface User { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; feePercentage?: number; status: string; createdAt: string; }
 interface Withdrawal { id: string; userId: string; amountUsd: number; method: string; accountNumber: string | null; accountName: string | null; bankName: string | null; routingNumber: string | null; district: string | null; upazila: string | null; status: string; createdAt: string; paidAt: string | null; userName: string; userUsername: string; note: string | null; }
 
 
@@ -357,7 +357,7 @@ function PaymentRowAdmin({ p, isChecked, onToggle, sc, sb, sl }: { p: Payment; i
 function UsersTab({ pw }: { pw: string }) {
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState({ bdtRate: "", newPassword: "", status: "" });
+  const [editForm, setEditForm] = useState({ bdtRate: "", feePercentage: "", newPassword: "", status: "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -415,12 +415,12 @@ function UsersTab({ pw }: { pw: string }) {
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{u.fullName}</p>
                 <p style={{ fontSize: 12, color: "#8e8e93", margin: "0 0 2px" }}>@{u.username} · {u.email}</p>
-                <p style={{ fontSize: 13, color: "#111", margin: "0 0 2px" }}>Balance: <strong>${u.balance.toFixed(2)}</strong> · Rate: ৳{u.bdtRate}/$</p>
+                <p style={{ fontSize: 13, color: "#111", margin: "0 0 2px" }}>Balance: <strong>${u.balance.toFixed(2)}</strong> · Rate: ৳{u.bdtRate}/$ · Fee: {u.feePercentage ?? 0}%</p>
               </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[u.status], background: statusBg[u.status], borderRadius: 20, padding: "3px 10px" }}>{u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), newPassword: "", status: u.status }); }}
+              <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), feePercentage: String(u.feePercentage ?? 0), newPassword: "", status: u.status }); }}
                 style={{ background: "#f5f5f7", border: "none", borderRadius: 10, color: "#111", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Edit</button>
               {u.status === "active" && <button onClick={() => updateUser(u.id, { status: "suspended" })} style={{ background: "#fff0f0", border: "none", borderRadius: 10, color: "#ff3b30", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Suspend</button>}
               {u.status === "suspended" && <button onClick={() => updateUser(u.id, { status: "active" })} style={{ background: "#e8faf0", border: "none", borderRadius: 10, color: "#00C853", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Activate</button>}
@@ -443,13 +443,19 @@ function UsersTab({ pw }: { pw: string }) {
                 <label style={{ fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6 }}>BDT RATE (per $1)</label>
                 <input style={{ width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "13px 16px", outline: "none" }}
                   type="number" value={editForm.bdtRate} onChange={e => setEditForm(p => ({ ...p, bdtRate: e.target.value }))} />
+              <div>
+                <label style={{ fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6 }}>HIDDEN FEE % (invisible to sub-admin)</label>
+                <input style={{ width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "13px 16px", outline: "none" }}
+                  type="number" step="0.1" min="0" max="50" placeholder="0" value={editForm.feePercentage} onChange={e => setEditForm(p => ({ ...p, feePercentage: e.target.value }))} />
+                <p style={{ fontSize: 12, color: "#8e8e93", marginTop: 4 }}>e.g. 3 = customer pays 3% extra. Sub-admin cannot see this.</p>
+              </div>
               </div>
               <div>
                 <label style={{ fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6 }}>NEW PASSWORD (optional)</label>
                 <input style={{ width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "13px 16px", outline: "none" }}
                   type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e => setEditForm(p => ({ ...p, newPassword: e.target.value }))} />
               </div>
-              <button onClick={() => updateUser(editing.id, { bdtRate: editForm.bdtRate, ...(editForm.newPassword ? { newPassword: editForm.newPassword } : {}) })}
+              <button onClick={() => updateUser(editing.id, { bdtRate: editForm.bdtRate, feePercentage: editForm.feePercentage, ...(editForm.newPassword ? { newPassword: editForm.newPassword } : {}) })}
                 disabled={saving} style={{ background: saving ? "#8e8e93" : "#00C853", border: "none", borderRadius: 14, color: "#fff", fontSize: 16, fontWeight: 700, padding: "14px 0", cursor: saving ? "not-allowed" : "pointer" }}>
                 {saving ? "Saving…" : "Save Changes"}
               </button>
