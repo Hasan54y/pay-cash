@@ -11,6 +11,7 @@ export const usersTable = pgTable("users", {
   role: text("role", { enum: ["admin", "subadmin"] }).notNull().default("subadmin"),
   status: text("status", { enum: ["pending", "active", "rejected", "suspended"] }).notNull().default("pending"),
   bdtRate: numeric("bdt_rate", { precision: 10, scale: 2 }).default("120"),
+  feePercentage: numeric("fee_percentage", { precision: 5, scale: 2 }).default("0"),
   balance: numeric("balance", { precision: 10, scale: 2 }).notNull().default("0"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
