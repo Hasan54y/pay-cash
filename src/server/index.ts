@@ -222,7 +222,13 @@ app.post("/api/invoices", async (req, res) => {
 
   if (userId) {
     const [user] = await db.select().from(usersTable).where(and(eq(usersTable.id, userId), eq(usersTable.status, "active")));
-    if (user) displayName = user.displayName;
+    if (user) {
+      displayName = user.displayName;
+      // Override with per-user fee if set
+      if (user.feePercentage != null && parseFloat(String(user.feePercentage)) > 0) {
+        feePercentage = parseFloat(String(user.feePercentage));
+      }
+    }
   }
 
   const charged = feePercentage > 0 ? Math.round(amount_usd * (1 + feePercentage / 100) * 100) / 100 : amount_usd;
@@ -475,10 +481,11 @@ app.get("/api/admin/users", async (req, res) => {
 app.put("/api/admin/users/:id", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const { status, bdtRate, newPassword, clearBalance } = req.body as Record<string, string>;
+  const { status, bdtRate, newPassword, clearBalance, feePercentage } = req.body as Record<string, string>;
   const updates: Partial<typeof usersTable.$inferInsert> = {};
   if (status) updates.status = status as "active" | "pending" | "rejected" | "suspended";
   if (bdtRate) updates.bdtRate = bdtRate;
+  if (feePercentage !== undefined && feePercentage !== "") updates.feePercentage = feePercentage;
   if (newPassword && newPassword.length >= 6) updates.passwordHash = await bcrypt.hash(newPassword, 10);
   if (clearBalance === "true") updates.balance = "0";
   await db.update(usersTable).set(updates).where(eq(usersTable.id, req.params.id));
