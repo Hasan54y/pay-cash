@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import QRCanvas from "./../QRCanvas";
-import ThemeToggle from "./../theme";
 import { Avatar } from "./../Avatar";
 
 interface Invoice { invoiceId: string; shortId: string; lightningInvoice: string; amountSats: number; amountUsd: number; }
@@ -25,6 +24,12 @@ export default function PaymentPage() {
   const [countdown, setCountdown] = useState(600);
   const [error, setError] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
+
+  // The customer-facing payment page always renders in the light/white theme,
+  // regardless of the visitor's system preference or a theme toggled elsewhere in the app.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", "light");
+  }, []);
 
   useEffect(() => {
     if (!username) return;
@@ -104,7 +109,6 @@ export default function PaymentPage() {
 
   if (notFound) return (
     <div className="pay-page">
-      <ThemeToggle />
       <div style={{ textAlign: "center" }}>
         <img src="/cashapp-logo.png" width={64} height={64} style={{ borderRadius: 16, display: "block", margin: "0 auto 16px" }} alt="" />
         <h2 style={{ fontSize: 20, fontWeight: 700 }}>Page not found</h2>
@@ -115,7 +119,6 @@ export default function PaymentPage() {
 
   if (receipt) return (
     <div className="pay-page">
-      <ThemeToggle />
       <div className="pay-card">
         <div style={{ height: 6, background: "var(--primary)" }} />
         <div style={{ padding: "32px 28px 28px", textAlign: "center" }}>
@@ -143,7 +146,6 @@ export default function PaymentPage() {
 
   if (invoice) return (
     <div className="pay-page">
-      <ThemeToggle />
       <div className="pay-card" style={{ maxWidth: 420, paddingBottom: 28 }}>
         <div className="pay-grabber" />
         <button onClick={reset} style={{ background: "var(--surface-alt)", border: "none", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", margin: "14px 0 0 20px" }}>
@@ -187,7 +189,6 @@ export default function PaymentPage() {
 
   return (
     <div className="pay-page">
-      <ThemeToggle />
       <div className="pay-card" style={{ paddingBottom: 24 }}>
         <div className="pay-grabber" />
         <div className="send-money-head">
