@@ -88,8 +88,8 @@ export default function DashboardPage() {
 
   function logout() { localStorage.removeItem("user_token"); localStorage.removeItem("user_role"); navigate("/login"); }
 
-  const sc: Record<string, string> = { paid: "#00C853", pending: "#ff9500", expired: "rgba(0,0,0,0.4)" };
-  const sb: Record<string, string> = { paid: "#e8faf0", pending: "#fff9f0", expired: "rgba(0,0,0,0.06)" };
+  const sc: Record<string, string> = { paid: "var(--primary-dark)", pending: "var(--warning-soft-text)", expired: "var(--text-muted)" };
+  const sb: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", expired: "var(--neutral-soft)" };
   const sl: Record<string, string> = { paid: "Completed", pending: "Pending", expired: "Expired" };
 
   function PaymentRow({ p }: { p: Payment }) {
@@ -100,8 +100,8 @@ export default function DashboardPage() {
             {p.status === "paid"
               ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
               : p.status === "expired"
-                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.4)" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff9500" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning-soft-text)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
           </div>
           <div>
             <p className="row-title">${p.amountUsd.toFixed(2)}</p>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
     );
   }
 
-  const wsc: Record<string, string> = { paid: "var(--primary-dark)", pending: "#b45309", rejected: "var(--danger)" };
+  const wsc: Record<string, string> = { paid: "var(--primary-dark)", pending: "var(--warning-soft-text)", rejected: "var(--danger)" };
   const wsb: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", rejected: "var(--danger-soft)" };
 
   function WithdrawalRow({ w }: { w: Withdrawal }) {
@@ -304,7 +304,7 @@ export default function DashboardPage() {
         {NAV_ITEMS.map(item => (
           <button key={item.key} onClick={() => setTab(item.key)}>
             {item.icon(tab === item.key)}
-            <span className="bottom-nav-label" style={{ color: tab === item.key ? "#00C853" : "#8e8e93" }}>{item.label}</span>
+            <span className="bottom-nav-label" style={{ color: tab === item.key ? "#00C853" : "var(--text-muted)" }}>{item.label}</span>
           </button>
         ))}
       </div>
@@ -500,7 +500,7 @@ function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw 
                     <p className="row-sub">{w.method.toUpperCase()} · {new Date(w.createdAt).toLocaleDateString()}</p>
                   </div>
                   <span className="badge" style={{
-                    color: w.status === "paid" ? "var(--primary-dark)" : w.status === "rejected" ? "var(--danger)" : "#b45309",
+                    color: w.status === "paid" ? "var(--primary-dark)" : w.status === "rejected" ? "var(--danger)" : "var(--warning-soft-text)",
                     background: w.status === "paid" ? "var(--primary-soft)" : w.status === "rejected" ? "var(--danger-soft)" : "var(--warning-soft)",
                   }}>
                     {w.status.charAt(0).toUpperCase() + w.status.slice(1)}

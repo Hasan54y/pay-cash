@@ -121,7 +121,7 @@ export default function AdminPage() {
         {NAV_ITEMS.map(item => (
           <button key={item.key} onClick={() => setTab(item.key)}>
             {item.icon(tab === item.key)}
-            <span className="bottom-nav-label" style={{ color: tab === item.key ? "#00C853" : "#8e8e93" }}>{item.label}</span>
+            <span className="bottom-nav-label" style={{ color: tab === item.key ? "#00C853" : "var(--text-muted)" }}>{item.label}</span>
           </button>
         ))}
       </div>
@@ -245,8 +245,8 @@ function HomeTab({ pw }: { pw: string }) {
 }
 
 function PaymentRowSimple({ p }: { p: Payment }) {
-  const sc: Record<string, string> = { paid: "#00C853", pending: "#ff9500", expired: "rgba(0,0,0,0.4)" };
-  const sb: Record<string, string> = { paid: "#e8faf0", pending: "#fff9f0", expired: "rgba(0,0,0,0.06)" };
+  const sc: Record<string, string> = { paid: "var(--primary-dark)", pending: "var(--warning-soft-text)", expired: "var(--text-muted)" };
+  const sb: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", expired: "var(--neutral-soft)" };
   const sl: Record<string, string> = { paid: "Completed", pending: "Pending", expired: "Expired" };
   return (
     <div className="list-row">
@@ -308,8 +308,8 @@ function PaymentsTab({ pw }: { pw: string }) {
     if (ex) ex.items.push(p); else grouped.push({ label, items: [p] });
   }
 
-  const sc: Record<string, string> = { paid: "#00C853", pending: "#ff9500", expired: "rgba(0,0,0,0.4)" };
-  const sb: Record<string, string> = { paid: "#e8faf0", pending: "#fff9f0", expired: "rgba(0,0,0,0.06)" };
+  const sc: Record<string, string> = { paid: "var(--primary-dark)", pending: "var(--warning-soft-text)", expired: "var(--text-muted)" };
+  const sb: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", expired: "var(--neutral-soft)" };
   const sl: Record<string, string> = { paid: "Completed", pending: "Pending", expired: "Expired" };
 
   return (
@@ -353,7 +353,7 @@ function PaymentRowAdmin({ p, isChecked, onToggle, sc, sb, sl }: { p: Payment; i
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--surface-alt)", gap: 10 }}>
-        <button onClick={onToggle} style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${isChecked ? "var(--primary)" : "#d1d1d6"}`, background: isChecked ? "var(--primary)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, padding: 0 }}>
+        <button onClick={onToggle} style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${isChecked ? "var(--primary)" : "var(--text-faint)"}`, background: isChecked ? "var(--primary)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, padding: 0 }}>
           {isChecked && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3.5 3.5 5.5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
         </button>
         <div onClick={() => setOpen(v => !v)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
@@ -366,7 +366,7 @@ function PaymentRowAdmin({ p, isChecked, onToggle, sc, sb, sl }: { p: Payment; i
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className="badge" style={{ color: sc[p.status] ?? "#888", background: sb[p.status] ?? "#f5f5f7" }}>{sl[p.status] ?? p.status}</span>
-            <span style={{ color: "#c7c7cc", fontSize: 16 }}>{open ? "▾" : "›"}</span>
+            <span style={{ color: "var(--chevron)", fontSize: 16 }}>{open ? "▾" : "›"}</span>
           </div>
         </div>
       </div>
@@ -380,7 +380,7 @@ function PaymentRowAdmin({ p, isChecked, onToggle, sc, sb, sl }: { p: Payment; i
           ))}
           <div style={{ marginTop: 8 }}>
             <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 4px", fontWeight: 600 }}>Invoice</p>
-            <p style={{ fontSize: 11, color: "#555", fontFamily: "monospace", wordBreak: "break-all", margin: "0 0 8px" }}>{p.lightningInvoice.slice(0, 40)}...</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace", wordBreak: "break-all", margin: "0 0 8px" }}>{p.lightningInvoice.slice(0, 40)}...</p>
             <button onClick={() => navigator.clipboard.writeText(p.lightningInvoice)} className="btn btn-outline btn-sm">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
               Copy Invoice
@@ -412,8 +412,8 @@ function UsersTab({ pw }: { pw: string }) {
     if (r.ok) { fetchUsers(); setEditing(null); setMsg("✓ Updated!"); setTimeout(() => setMsg(""), 2000); }
   }
 
-  const statusColor: Record<string, string> = { active: "#00C853", pending: "#ff9500", rejected: "#ff3b30", suspended: "#ff3b30" };
-  const statusBg: Record<string, string> = { active: "#e8faf0", pending: "#fff9f0", rejected: "#fff0f0", suspended: "#fff0f0" };
+  const statusColor: Record<string, string> = { active: "var(--primary-dark)", pending: "var(--warning-soft-text)", rejected: "var(--danger)", suspended: "var(--danger)" };
+  const statusBg: Record<string, string> = { active: "var(--primary-soft)", pending: "var(--warning-soft)", rejected: "var(--danger-soft)", suspended: "var(--danger-soft)" };
 
   const pending = users.filter(u => u.status === "pending");
   const others = users.filter(u => u.status !== "pending");
@@ -426,7 +426,7 @@ function UsersTab({ pw }: { pw: string }) {
       <div className="section-stack" style={{ padding: "16px 0" }}>
         {pending.length > 0 && (
           <div className="card" style={{ padding: 16 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#b45309", marginBottom: 12 }}>⏳ Pending Approval ({pending.length})</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--warning-soft-text)", marginBottom: 12 }}>⏳ Pending Approval ({pending.length})</p>
             {pending.map(u => (
               <div key={u.id} style={{ borderBottom: "1px solid var(--surface-alt)", paddingBottom: 12, marginBottom: 12 }}>
                 <div style={{ marginBottom: 8 }}>
@@ -458,7 +458,7 @@ function UsersTab({ pw }: { pw: string }) {
                 <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), feePercentage: String(u.feePercentage ?? 0), newPassword: "", status: u.status, balance: String(u.balance) }); }} className="btn btn-muted btn-sm">Edit</button>
                 {u.status === "active" && <button onClick={() => updateUser(u.id, { status: "suspended" })} className="btn btn-danger-soft btn-sm">Suspend</button>}
                 {u.status === "suspended" && <button onClick={() => updateUser(u.id, { status: "active" })} className="btn btn-success-soft btn-sm">Activate</button>}
-                <button onClick={() => { if (confirm(`Clear $${u.balance.toFixed(2)} balance for ${u.displayName}?`)) updateUser(u.id, { clearBalance: "true" }); }} className="btn btn-sm" style={{ background: "var(--warning-soft)", color: "#b45309" }}>Clear Balance</button>
+                <button onClick={() => { if (confirm(`Clear $${u.balance.toFixed(2)} balance for ${u.displayName}?`)) updateUser(u.id, { clearBalance: "true" }); }} className="btn btn-sm" style={{ background: "var(--warning-soft)", color: "var(--warning-soft-text)" }}>Clear Balance</button>
               </div>
             </div>
           ))}
@@ -524,8 +524,8 @@ function WithdrawalsTab({ pw }: { pw: string }) {
   const filtered = withdrawals.filter(w => filter === "all" || w.status === filter);
   const pendingCount = withdrawals.filter(w => w.status === "pending").length;
 
-  const sc: Record<string, string> = { paid: "#00C853", pending: "#ff9500", rejected: "#ff3b30" };
-  const sb: Record<string, string> = { paid: "#e8faf0", pending: "#fff9f0", rejected: "#fff0f0" };
+  const sc: Record<string, string> = { paid: "var(--primary-dark)", pending: "var(--warning-soft-text)", rejected: "var(--danger)" };
+  const sb: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", rejected: "var(--danger-soft)" };
 
   return (
     <div>
@@ -555,7 +555,7 @@ function WithdrawalsTab({ pw }: { pw: string }) {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span className="badge" style={{ color: sc[w.status], background: sb[w.status] }}>{w.status.charAt(0).toUpperCase() + w.status.slice(1)}</span>
-                  <span style={{ color: "#c7c7cc" }}>{expanded === w.id ? "▾" : "›"}</span>
+                  <span style={{ color: "var(--chevron)" }}>{expanded === w.id ? "▾" : "›"}</span>
                 </div>
               </div>
 
