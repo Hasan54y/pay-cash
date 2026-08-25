@@ -4,12 +4,12 @@ import { downloadQRCard } from "./../qrRenderer";
 import { useState, useEffect, useRef } from "react";
 
 // Vector Icons
-function IcoHome({ on }: { on: boolean }) { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"#8e8e93"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>; }
-function IcoCard({ on }: { on: boolean }) { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"#8e8e93"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>; }
-function IcoUsers({ on }: { on: boolean }) { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"#8e8e93"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>; }
-function IcoMoney({ on }: { on: boolean }) { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"#8e8e93"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>; }
-function IcoSettings({ on }: { on: boolean }) { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"#8e8e93"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>; }
-
+function IcoHome({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>; }
+function IcoCard({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>; }
+function IcoUsers({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>; }
+function IcoMoney({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>; }
+function IcoSettings({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>; }
+function IcoLogout() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>; }
 
 type Tab = "home" | "payments" | "users" | "withdrawals" | "settings";
 
@@ -18,6 +18,13 @@ interface AdminData { payments: Payment[]; totalRevenue: number; }
 interface User { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; feePercentage?: number; status: string; createdAt: string; }
 interface Withdrawal { id: string; userId: string; amountUsd: number; method: string; accountNumber: string | null; accountName: string | null; bankName: string | null; routingNumber: string | null; district: string | null; upazila: string | null; status: string; createdAt: string; paidAt: string | null; userName: string; userUsername: string; note: string | null; }
 
+const NAV_ITEMS: { key: Tab; label: string; icon: (on: boolean) => React.ReactNode }[] = [
+  { key: "home", label: "Home", icon: (on) => <IcoHome on={on} /> },
+  { key: "payments", label: "Payments", icon: (on) => <IcoCard on={on} /> },
+  { key: "users", label: "Users", icon: (on) => <IcoUsers on={on} /> },
+  { key: "withdrawals", label: "Withdraw", icon: (on) => <IcoMoney on={on} /> },
+  { key: "settings", label: "Settings", icon: (on) => <IcoSettings on={on} /> },
+];
 
 function playSound() {
   try {
@@ -45,43 +52,70 @@ export default function AdminPage() {
   }
 
   if (!authed) return (
-    <div style={{ background: "#f5f5f7", minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "#fff", borderRadius: 24, padding: "36px 28px", width: "100%", maxWidth: 360, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", textAlign: "center" }}>
-        <img src="/cashapp-logo.png" width={60} height={60} alt="" style={{ borderRadius: 14, margin: "0 auto 16px", display: "block" }} />
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 4 }}>Pay Cash</h1>
-        <p style={{ color: "#888", fontSize: 14, marginBottom: 24 }}>Admin Dashboard</p>
-        <form onSubmit={login} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Admin password" required
-            style={{ background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "14px 16px", outline: "none", textAlign: "center" }} />
-          {authError && <p style={{ color: "#ff3b30", fontSize: 13 }}>{authError}</p>}
-          <button type="submit" style={{ background: "#00C853", border: "none", borderRadius: 14, color: "#fff", fontSize: 16, fontWeight: 700, padding: "15px 0", cursor: "pointer" }}>Sign In</button>
-        </form>
+    <div className="auth-page">
+      <div className="auth-visual">
+        <div className="auth-visual-brand">
+          <img src="/cashapp-logo.png" alt="" />
+          <span>Pay Cash</span>
+        </div>
+        <div className="auth-visual-copy">
+          <h2>Admin control center.</h2>
+          <p>Review payments, approve sub-admins, and process withdrawals across the whole platform.</p>
+        </div>
+        <div className="auth-visual-foot">Admin access · Pay Cash</div>
+      </div>
+      <div className="auth-form-side">
+        <div className="auth-card">
+          <img className="logo" src="/cashapp-logo.png" alt="" />
+          <h1>Pay Cash</h1>
+          <p className="subtitle">Admin Dashboard</p>
+          <form onSubmit={login} className="auth-form">
+            <input className="input" type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Admin password" required style={{ textAlign: "center" }} />
+            {authError && <p className="error-text">{authError}</p>}
+            <button type="submit" className="btn btn-primary btn-block">Sign In</button>
+          </form>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div style={{ background: "#f5f5f7", minHeight: "100dvh", fontFamily: "-apple-system, sans-serif", paddingBottom: 80 }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{ maxWidth: 500, margin: "0 auto" }}>
-        {tab === "home" && <HomeTab pw={pw} />}
-        {tab === "payments" && <PaymentsTab pw={pw} />}
-        {tab === "users" && <UsersTab pw={pw} />}
-        {tab === "withdrawals" && <WithdrawalsTab pw={pw} />}
-        {tab === "settings" && <SettingsTab pw={pw} onLogout={() => { localStorage.removeItem("admin_pw"); setAuthed(false); setPw(""); }} />}
+    <div className="shell">
+      <nav className="sidebar">
+        <div className="sidebar-brand">
+          <img src="/cashapp-logo.png" alt="" />
+          <span>Pay Cash Admin</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+          {NAV_ITEMS.map(item => (
+            <button key={item.key} className={`sidebar-link ${tab === item.key ? "active" : ""}`} onClick={() => setTab(item.key)}>
+              {item.icon(tab === item.key)}
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="sidebar-foot">
+          <button className="sidebar-link" onClick={() => { localStorage.removeItem("admin_pw"); setAuthed(false); setPw(""); }}>
+            <IcoLogout /> Sign Out
+          </button>
+        </div>
+      </nav>
+
+      <div className="shell-content">
+        <div className="shell-inner">
+          {tab === "home" && <HomeTab pw={pw} />}
+          {tab === "payments" && <PaymentsTab pw={pw} />}
+          {tab === "users" && <UsersTab pw={pw} />}
+          {tab === "withdrawals" && <WithdrawalsTab pw={pw} />}
+          {tab === "settings" && <SettingsTab pw={pw} onLogout={() => { localStorage.removeItem("admin_pw"); setAuthed(false); setPw(""); }} />}
+        </div>
       </div>
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(255,255,255,0.96)", backdropFilter: "blur(20px)", borderTop: "1px solid #e5e5ea", display: "flex", zIndex: 100 }}>
-        {([
-          ["home","Home",<IcoHome on={tab==="home"} />],
-          ["payments","Payments",<IcoCard on={tab==="payments"} />],
-          ["users","Users",<IcoUsers on={tab==="users"} />],
-          ["withdrawals","Withdraw",<IcoMoney on={tab==="withdrawals"} />],
-          ["settings","Settings",<IcoSettings on={tab==="settings"} />],
-        ] as [Tab,string,React.ReactNode][]).map(([t,label,icon]) => (
-          <button key={String(t)} onClick={() => setTab(t as Tab)}
-            style={{ flex: 1, background: "transparent", border: "none", padding: "8px 0 12px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            {icon}
-            <span style={{ fontSize: 10, fontWeight: 600, color: tab === t ? "#00C853" : "#8e8e93" }}>{String(label)}</span>
+
+      <div className="bottom-nav">
+        {NAV_ITEMS.map(item => (
+          <button key={item.key} onClick={() => setTab(item.key)}>
+            {item.icon(tab === item.key)}
+            <span className="bottom-nav-label" style={{ color: tab === item.key ? "#00C853" : "#8e8e93" }}>{item.label}</span>
           </button>
         ))}
       </div>
@@ -129,75 +163,73 @@ function HomeTab({ pw }: { pw: string }) {
   const last10 = payments.filter(p => !(p.status === "expired" && Date.now() - new Date(p.createdAt).getTime() > 600000)).slice(0, 10);
 
   return (
-    <div style={{ paddingBottom: 16 }}>
-      <div style={{ background: "#1c2333", padding: "52px 20px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src="/cashapp-logo.png" width={36} height={36} style={{ borderRadius: 9 }} alt="" />
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>Pay {displayName}</span>
+    <div>
+      <div className="hero-panel">
+        <div className="hero-top">
+          <div className="hero-brand">
+            <img src="/cashapp-logo.png" alt="" />
+            <span>Pay {displayName}</span>
           </div>
-          <span style={{ background: "rgba(0,200,83,0.15)", border: "1px solid rgba(0,200,83,0.4)", borderRadius: 20, padding: "5px 12px", fontSize: 13, fontWeight: 600, color: "#00C853", display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 7, height: 7, background: "#00C853", borderRadius: "50%", display: "inline-block" }} />Live
-          </span>
+          <span className="live-badge"><span className="live-dot" />Live</span>
         </div>
-        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 20, padding: 20 }}>
+        <div className="balance-card">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
             <div style={{ borderRight: "1px solid rgba(255,255,255,0.08)", paddingRight: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>Present Balance</p>
-              <p style={{ fontSize: 24, fontWeight: 900, margin: "0 0 2px", color: "#00C853" }}>${walletBalance != null ? walletBalance.toFixed(2) : "…"}</p>
-              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>Speed Wallet</p>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 6 }}>Present Balance</p>
+              <p style={{ fontSize: 24, fontWeight: 900, marginBottom: 2, color: "#00C853" }}>${walletBalance != null ? walletBalance.toFixed(2) : "…"}</p>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Speed Wallet</p>
             </div>
             <div style={{ paddingLeft: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: "0 0 6px" }}>Total Revenue</p>
-              <p style={{ fontSize: 24, fontWeight: 900, margin: "0 0 2px", color: "#fff" }}>${totalRevenue.toFixed(2)}</p>
-              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>{paid.length} payments</p>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 6 }}>Total Revenue</p>
+              <p style={{ fontSize: 24, fontWeight: 900, marginBottom: 2, color: "#fff" }}>${totalRevenue.toFixed(2)}</p>
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{paid.length} payments</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 16 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#8e8e93", textTransform: "uppercase", letterSpacing: 0.8, margin: "0 0 6px" }}>Today</p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 2px" }}>${todayTotal.toFixed(2)}</p>
-            <p style={{ fontSize: 12, color: "#8e8e93", margin: 0 }}>{todayPaid.length} paid</p>
+      <div className="section-stack">
+        <div className="stat-grid">
+          <div className="stat-tile">
+            <p className="stat-label">Today</p>
+            <p className="stat-value">${todayTotal.toFixed(2)}</p>
+            <p className="stat-sub">{todayPaid.length} paid</p>
           </div>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 16 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#8e8e93", textTransform: "uppercase", letterSpacing: 0.8, margin: "0 0 6px" }}>All Time</p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 2px" }}>{paid.length}</p>
-            <p style={{ fontSize: 12, color: "#8e8e93", margin: 0 }}>payments</p>
-          </div>
-        </div>
-
-        <div style={{ background: "#fff", borderRadius: 20, padding: 16 }}>
-          <p style={{ fontSize: 13, color: "#8e8e93", textAlign: "center", margin: "0 0 12px" }}>Scan to pay with cash app</p>
-          <div style={{ display: "flex", gap: 12, alignItems: "stretch" }}>
-            <div style={{ background: "#f5f5f7", borderRadius: 12, padding: 8, flexShrink: 0 }}>
-              <QRCanvas data={payLink} size={120} />
-            </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
-              <p style={{ fontSize: 11, color: "#888", margin: 0, wordBreak: "break-all" }}>
-                {adminUsername ? `pay-cash.shop/pay/${adminUsername}` : "Set username in Settings"}
-              </p>
-              <button onClick={() => { navigator.clipboard.writeText(payLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                style={{ background: "#111", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                {copied ? "Copied!" : "Copy Link"}
-              </button>
-              <button onClick={() => downloadQRCard(payLink, displayName)}
-                style={{ background: "#f5f5f7", border: "none", borderRadius: 10, color: "#111", fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download QR
-              </button>
-            </div>
+          <div className="stat-tile">
+            <p className="stat-label">All Time</p>
+            <p className="stat-value">{paid.length}</p>
+            <p className="stat-sub">payments</p>
           </div>
         </div>
 
-        <div style={{ background: "#fff", borderRadius: 20, padding: 16 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 12px" }}>Recent Transactions</p>
-          {last10.length === 0 ? <p style={{ color: "#8e8e93", textAlign: "center", padding: "16px 0" }}>No transactions yet</p>
-            : last10.map(p => <PaymentRowSimple key={p.id} p={p} />)}
+        <div className="two-col">
+          <div className="card" style={{ padding: 16 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Recent Transactions</p>
+            {last10.length === 0 ? <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "16px 0" }}>No transactions yet</p>
+              : last10.map(p => <PaymentRowSimple key={p.id} p={p} />)}
+          </div>
+
+          <div className="card" style={{ padding: 16 }}>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", marginBottom: 12 }}>Scan to pay with cash app</p>
+            <div style={{ display: "flex", gap: 12, alignItems: "stretch" }}>
+              <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 8, flexShrink: 0 }}>
+                <QRCanvas data={payLink} size={120} />
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", wordBreak: "break-all" }}>
+                  {adminUsername ? `pay-cash.shop/pay/${adminUsername}` : "Set username in Settings"}
+                </p>
+                <button onClick={() => { navigator.clipboard.writeText(payLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn btn-dark" style={{ fontSize: 13, padding: "10px 0" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  {copied ? "Copied!" : "Copy Link"}
+                </button>
+                <button onClick={() => downloadQRCard(payLink, displayName)} className="btn btn-muted" style={{ fontSize: 13, padding: "10px 0" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download QR
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -209,17 +241,17 @@ function PaymentRowSimple({ p }: { p: Payment }) {
   const sb: Record<string, string> = { paid: "#e8faf0", pending: "#fff9f0", expired: "rgba(0,0,0,0.06)" };
   const sl: Record<string, string> = { paid: "Completed", pending: "Pending", expired: "Expired" };
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f5f5f7" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: sb[p.status] ?? "#f5f5f7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+    <div className="list-row">
+      <div className="row-left">
+        <div className="row-icon" style={{ background: sb[p.status] ?? "#f5f5f7", fontSize: 16 }}>
           {p.status === "paid" ? "✓" : p.status === "expired" ? "✕" : "⏳"}
         </div>
         <div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>${p.amountUsd.toFixed(2)} {p.subadminName && <span style={{ fontSize: 11, color: "#8e8e93", fontWeight: 400 }}>· {p.subadminName}</span>}</p>
-          <p style={{ fontSize: 12, color: "#8e8e93", margin: 0 }}>{new Date(p.paidAt ?? p.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+          <p className="row-title">${p.amountUsd.toFixed(2)} {p.subadminName && <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 400 }}>· {p.subadminName}</span>}</p>
+          <p className="row-sub">{new Date(p.paidAt ?? p.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
         </div>
       </div>
-      <span style={{ fontSize: 12, fontWeight: 600, color: sc[p.status], background: sb[p.status], borderRadius: 20, padding: "3px 10px" }}>{sl[p.status] ?? p.status}</span>
+      <span className="badge" style={{ color: sc[p.status], background: sb[p.status] }}>{sl[p.status] ?? p.status}</span>
     </div>
   );
 }
@@ -274,30 +306,29 @@ function PaymentsTab({ pw }: { pw: string }) {
 
   return (
     <div>
-      <div style={{ background: "#fff", padding: "52px 20px 14px", borderBottom: "1px solid #f0f0f0" }}>
+      <div className="mobile-topbar">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111", margin: 0 }}>Payments</h1>
-          <button onClick={sync} disabled={syncing} style={{ background: "#f5f5f7", border: "none", borderRadius: 20, color: syncing ? "#8e8e93" : "#111", fontSize: 13, fontWeight: 600, padding: "8px 14px", cursor: syncing ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+          <h1>Payments</h1>
+          <button onClick={sync} disabled={syncing} className="btn btn-muted btn-pill btn-sm" style={{ color: syncing ? "var(--text-muted)" : "var(--text)" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ animation: syncing ? "spin 1s linear infinite" : "none" }}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
             {syncing ? "Syncing…" : "Sync"}
           </button>
         </div>
-        {syncMsg && <p style={{ color: "#00C853", fontSize: 12, margin: "6px 0 0", fontWeight: 600 }}>{syncMsg}</p>}
+        {syncMsg && <p style={{ color: "var(--primary)", fontSize: 12, marginTop: 6, fontWeight: 600 }}>{syncMsg}</p>}
       </div>
-      <div style={{ display: "flex", gap: 8, padding: "12px 16px", overflowX: "auto" }}>
+      <div className="chip-row">
         {(["all","paid","pending","expired"] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            style={{ background: filter === f ? "#111" : "#fff", border: "none", borderRadius: 20, color: filter === f ? "#fff" : "#8e8e93", fontSize: 13, fontWeight: 600, padding: "8px 16px", cursor: "pointer", whiteSpace: "nowrap", boxShadow: filter === f ? "none" : "0 1px 4px rgba(0,0,0,0.08)" }}>
+          <button key={f} onClick={() => setFilter(f)} className={`chip ${filter === f ? "active" : ""}`}>
             {f === "paid" ? "Completed" : f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
           </button>
         ))}
       </div>
-      <div style={{ padding: "0 16px" }}>
-        {grouped.length === 0 ? <div style={{ background: "#fff", borderRadius: 20, padding: 32, textAlign: "center" }}><p style={{ color: "#8e8e93" }}>No payments</p></div>
+      <div style={{ paddingBottom: 24 }}>
+        {grouped.length === 0 ? <div className="card" style={{ padding: 32, textAlign: "center" }}><p style={{ color: "var(--text-muted)" }}>No payments</p></div>
           : grouped.map(({ label, items }) => (
             <div key={label} style={{ marginBottom: 12 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#8e8e93", margin: "0 0 8px 4px" }}>{label}</p>
-              <div style={{ background: "#fff", borderRadius: 20, padding: "4px 16px" }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)", margin: "0 0 8px 4px" }}>{label}</p>
+              <div className="card" style={{ padding: "4px 16px" }}>
                 {items.map(p => (
                   <PaymentRowAdmin key={p.id} p={p} isChecked={checked.has(p.id)} onToggle={() => toggleCheck(p.id)} sc={sc} sb={sb} sl={sl} />
                 ))}
@@ -313,37 +344,36 @@ function PaymentRowAdmin({ p, isChecked, onToggle, sc, sb, sl }: { p: Payment; i
   const [open, setOpen] = useState(false);
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #f5f5f7", gap: 10 }}>
-        <button onClick={onToggle} style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${isChecked ? "#00C853" : "#d1d1d6"}`, background: isChecked ? "#00C853" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, padding: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--surface-alt)", gap: 10 }}>
+        <button onClick={onToggle} style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${isChecked ? "var(--primary)" : "#d1d1d6"}`, background: isChecked ? "var(--primary)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, padding: 0 }}>
           {isChecked && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3.5 3.5 5.5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
         </button>
         <div onClick={() => setOpen(v => !v)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
           <div>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 2px", opacity: isChecked ? 0.4 : 1 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, margin: "0 0 2px", opacity: isChecked ? 0.4 : 1 }}>
               ${p.amountUsd.toFixed(2)}
-              {p.subadminName && <span style={{ fontSize: 11, color: "#8e8e93", fontWeight: 400, marginLeft: 6 }}>· {p.subadminName}</span>}
+              {p.subadminName && <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 400, marginLeft: 6 }}>· {p.subadminName}</span>}
             </p>
-            <p style={{ fontSize: 12, color: "#8e8e93", margin: 0 }}>{new Date(p.paidAt ?? p.createdAt).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
+            <p className="row-sub">{new Date(p.paidAt ?? p.createdAt).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: sc[p.status] ?? "#888", background: sb[p.status] ?? "#f5f5f7", borderRadius: 20, padding: "3px 10px" }}>{sl[p.status] ?? p.status}</span>
+            <span className="badge" style={{ color: sc[p.status] ?? "#888", background: sb[p.status] ?? "#f5f5f7" }}>{sl[p.status] ?? p.status}</span>
             <span style={{ color: "#c7c7cc", fontSize: 16 }}>{open ? "▾" : "›"}</span>
           </div>
         </div>
       </div>
       {open && (
-        <div style={{ background: "#f9f9f9", borderRadius: 12, padding: "12px 14px", margin: "4px 0 8px" }}>
+        <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: "12px 14px", margin: "4px 0 8px" }}>
           {[["Transaction ID", p.shortId, true], ["Amount (sats)", p.amountSats.toLocaleString(), false], ["Status", sl[p.status] ?? p.status, false], ...(p.subadminName ? [["Sub-admin", p.subadminName, false]] : []), ["Created", new Date(p.createdAt).toLocaleString(), false], ...(p.paidAt ? [["Paid at", new Date(p.paidAt).toLocaleString(), false]] : [])].map(([l, v, m]) => (
             <div key={String(l)} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <p style={{ fontSize: 12, color: "#8e8e93", margin: 0, fontWeight: 600 }}>{String(l)}</p>
-              <p style={{ fontSize: 12, color: "#111", margin: 0, fontFamily: m ? "monospace" : "inherit", textAlign: "right", maxWidth: "60%" }}>{String(v)}</p>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>{String(l)}</p>
+              <p style={{ fontSize: 12, fontFamily: m ? "monospace" : "inherit", textAlign: "right", maxWidth: "60%" }}>{String(v)}</p>
             </div>
           ))}
           <div style={{ marginTop: 8 }}>
-            <p style={{ fontSize: 11, color: "#8e8e93", margin: "0 0 4px", fontWeight: 600 }}>Invoice</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "0 0 4px", fontWeight: 600 }}>Invoice</p>
             <p style={{ fontSize: 11, color: "#555", fontFamily: "monospace", wordBreak: "break-all", margin: "0 0 8px" }}>{p.lightningInvoice.slice(0, 40)}...</p>
-            <button onClick={() => navigator.clipboard.writeText(p.lightningInvoice)}
-              style={{ background: "#fff", border: "1px solid #e5e5ea", borderRadius: 8, color: "#111", fontSize: 12, fontWeight: 600, padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+            <button onClick={() => navigator.clipboard.writeText(p.lightningInvoice)} className="btn btn-outline btn-sm">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
               Copy Invoice
             </button>
@@ -382,81 +412,74 @@ function UsersTab({ pw }: { pw: string }) {
 
   return (
     <div>
-      <div style={{ background: "#fff", padding: "52px 20px 16px", borderBottom: "1px solid #f0f0f0" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111", margin: 0 }}>Sub-admins</h1>
-      </div>
-      {msg && <div style={{ background: "#e8faf0", padding: "10px 16px", color: "#00C853", fontSize: 13, fontWeight: 600 }}>{msg}</div>}
+      <div className="mobile-topbar"><h1>Sub-admins</h1></div>
+      {msg && <div style={{ background: "var(--primary-soft)", padding: "10px 16px", color: "var(--primary-dark)", fontSize: 13, fontWeight: 600, borderRadius: 12, marginTop: 12 }}>{msg}</div>}
 
-      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="section-stack" style={{ padding: "16px 0" }}>
         {pending.length > 0 && (
-          <div style={{ background: "#fff", borderRadius: 20, padding: 16 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#ff9500", margin: "0 0 12px" }}>⏳ Pending Approval ({pending.length})</p>
+          <div className="card" style={{ padding: 16 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#b45309", marginBottom: 12 }}>⏳ Pending Approval ({pending.length})</p>
             {pending.map(u => (
-              <div key={u.id} style={{ borderBottom: "1px solid #f5f5f7", paddingBottom: 12, marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                  <div>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{u.fullName}</p>
-                    <p style={{ fontSize: 12, color: "#8e8e93", margin: "0 0 2px" }}>@{u.username} · {u.email}</p>
-                    {u.phone && <p style={{ fontSize: 12, color: "#8e8e93", margin: 0 }}>{u.phone}</p>}
-                  </div>
+              <div key={u.id} style={{ borderBottom: "1px solid var(--surface-alt)", paddingBottom: 12, marginBottom: 12 }}>
+                <div style={{ marginBottom: 8 }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>{u.fullName}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 2 }}>@{u.username} · {u.email}</p>
+                  {u.phone && <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{u.phone}</p>}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => updateUser(u.id, { status: "active" })} style={{ flex: 1, background: "#00C853", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer" }}>Approve</button>
-                  <button onClick={() => updateUser(u.id, { status: "rejected" })} style={{ flex: 1, background: "#fff0f0", border: "none", borderRadius: 10, color: "#ff3b30", fontSize: 13, fontWeight: 700, padding: "10px 0", cursor: "pointer" }}>Reject</button>
+                  <button onClick={() => updateUser(u.id, { status: "active" })} className="btn btn-success-soft btn-sm" style={{ flex: 1 }}>Approve</button>
+                  <button onClick={() => updateUser(u.id, { status: "rejected" })} className="btn btn-danger-soft btn-sm" style={{ flex: 1 }}>Reject</button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {others.map(u => (
-          <div key={u.id} style={{ background: "#fff", borderRadius: 20, padding: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{u.fullName}</p>
-                <p style={{ fontSize: 12, color: "#8e8e93", margin: "0 0 2px" }}>@{u.username} · {u.email}</p>
-                <p style={{ fontSize: 13, color: "#111", margin: "0 0 2px" }}>Balance: <strong>${u.balance.toFixed(2)}</strong> · Rate: ৳{u.bdtRate}/$ · Fee: {u.feePercentage ?? 0}%</p>
+        <div className="card-grid">
+          {others.map(u => (
+            <div key={u.id} className="card" style={{ padding: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>{u.fullName}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 2 }}>@{u.username} · {u.email}</p>
+                  <p style={{ fontSize: 13 }}>Balance: <strong>${u.balance.toFixed(2)}</strong> · Rate: ৳{u.bdtRate}/$ · Fee: {u.feePercentage ?? 0}%</p>
+                </div>
+                <span className="badge" style={{ color: statusColor[u.status], background: statusBg[u.status] }}>{u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span>
               </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: statusColor[u.status], background: statusBg[u.status], borderRadius: 20, padding: "3px 10px" }}>{u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), feePercentage: String(u.feePercentage ?? 0), newPassword: "", status: u.status }); }} className="btn btn-muted btn-sm">Edit</button>
+                {u.status === "active" && <button onClick={() => updateUser(u.id, { status: "suspended" })} className="btn btn-danger-soft btn-sm">Suspend</button>}
+                {u.status === "suspended" && <button onClick={() => updateUser(u.id, { status: "active" })} className="btn btn-success-soft btn-sm">Activate</button>}
+                <button onClick={() => { if (confirm(`Clear $${u.balance.toFixed(2)} balance for ${u.displayName}?`)) updateUser(u.id, { clearBalance: "true" }); }} className="btn btn-sm" style={{ background: "var(--warning-soft)", color: "#b45309" }}>Clear Balance</button>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), feePercentage: String(u.feePercentage ?? 0), newPassword: "", status: u.status }); }}
-                style={{ background: "#f5f5f7", border: "none", borderRadius: 10, color: "#111", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Edit</button>
-              {u.status === "active" && <button onClick={() => updateUser(u.id, { status: "suspended" })} style={{ background: "#fff0f0", border: "none", borderRadius: 10, color: "#ff3b30", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Suspend</button>}
-              {u.status === "suspended" && <button onClick={() => updateUser(u.id, { status: "active" })} style={{ background: "#e8faf0", border: "none", borderRadius: 10, color: "#00C853", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Activate</button>}
-              <button onClick={() => { if (confirm(`Clear $${u.balance.toFixed(2)} balance for ${u.displayName}?`)) updateUser(u.id, { clearBalance: "true" }); }}
-                style={{ background: "#fff9f0", border: "none", borderRadius: 10, color: "#ff9500", fontSize: 12, fontWeight: 600, padding: "8px 14px", cursor: "pointer" }}>Clear Balance</button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {editing && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "flex-end" }}>
-          <div style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 500, margin: "0 auto", padding: "24px 20px 40px" }}>
+        <div className="modal-overlay" onClick={() => setEditing(null)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Edit {editing.displayName}</h2>
-              <button onClick={() => setEditing(null)} style={{ background: "#f5f5f7", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+              <h2 style={{ fontSize: 18, fontWeight: 800 }}>Edit {editing.displayName}</h2>
+              <button onClick={() => setEditing(null)} style={{ background: "var(--surface-alt)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6 }}>BDT RATE (per $1)</label>
-                <input style={{ width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "13px 16px", outline: "none" }}
-                  type="number" value={editForm.bdtRate} onChange={e => setEditForm(p => ({ ...p, bdtRate: e.target.value }))} />
-              <div>
-                <label style={{ fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6 }}>HIDDEN FEE % (invisible to sub-admin)</label>
-                <input style={{ width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "13px 16px", outline: "none" }}
-                  type="number" step="0.1" min="0" max="50" placeholder="0" value={editForm.feePercentage} onChange={e => setEditForm(p => ({ ...p, feePercentage: e.target.value }))} />
-                <p style={{ fontSize: 12, color: "#8e8e93", marginTop: 4 }}>e.g. 3 = customer pays 3% extra. Sub-admin cannot see this.</p>
+              <div className="field">
+                <label className="field-label">BDT RATE (per $1)</label>
+                <input className="input" type="number" value={editForm.bdtRate} onChange={e => setEditForm(p => ({ ...p, bdtRate: e.target.value }))} />
               </div>
+              <div className="field">
+                <label className="field-label">HIDDEN FEE % (invisible to sub-admin)</label>
+                <input className="input" type="number" step="0.1" min="0" max="50" placeholder="0" value={editForm.feePercentage} onChange={e => setEditForm(p => ({ ...p, feePercentage: e.target.value }))} />
+                <p className="hint" style={{ color: "var(--text-muted)" }}>e.g. 3 = customer pays 3% extra. Sub-admin cannot see this.</p>
               </div>
-              <div>
-                <label style={{ fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6 }}>NEW PASSWORD (optional)</label>
-                <input style={{ width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "13px 16px", outline: "none" }}
-                  type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e => setEditForm(p => ({ ...p, newPassword: e.target.value }))} />
+              <div className="field">
+                <label className="field-label">NEW PASSWORD (optional)</label>
+                <input className="input" type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e => setEditForm(p => ({ ...p, newPassword: e.target.value }))} />
               </div>
               <button onClick={() => updateUser(editing.id, { bdtRate: editForm.bdtRate, feePercentage: editForm.feePercentage, ...(editForm.newPassword ? { newPassword: editForm.newPassword } : {}) })}
-                disabled={saving} style={{ background: saving ? "#8e8e93" : "#00C853", border: "none", borderRadius: 14, color: "#fff", fontSize: 16, fontWeight: 700, padding: "14px 0", cursor: saving ? "not-allowed" : "pointer" }}>
+                disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
                 {saving ? "Saving…" : "Save Changes"}
               </button>
             </div>
@@ -493,49 +516,46 @@ function WithdrawalsTab({ pw }: { pw: string }) {
 
   return (
     <div>
-      <div style={{ background: "#fff", padding: "52px 20px 14px", borderBottom: "1px solid #f0f0f0" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111", margin: 0 }}>
-          Withdrawals {pendingCount > 0 && <span style={{ background: "#ff3b30", color: "#fff", borderRadius: "50%", fontSize: 12, padding: "2px 7px", marginLeft: 6 }}>{pendingCount}</span>}
+      <div className="mobile-topbar">
+        <h1>
+          Withdrawals {pendingCount > 0 && <span style={{ background: "var(--danger)", color: "#fff", borderRadius: "50%", fontSize: 12, padding: "2px 7px", marginLeft: 6 }}>{pendingCount}</span>}
         </h1>
       </div>
 
-      <div style={{ display: "flex", gap: 8, padding: "12px 16px", overflowX: "auto" }}>
+      <div className="chip-row">
         {(["pending","all","paid","rejected"] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            style={{ background: filter === f ? "#111" : "#fff", border: "none", borderRadius: 20, color: filter === f ? "#fff" : "#8e8e93", fontSize: 13, fontWeight: 600, padding: "8px 16px", cursor: "pointer", whiteSpace: "nowrap", boxShadow: filter === f ? "none" : "0 1px 4px rgba(0,0,0,0.08)" }}>
+          <button key={f} onClick={() => setFilter(f)} className={`chip ${filter === f ? "active" : ""}`}>
             {f.charAt(0).toUpperCase() + f.slice(1)} {f !== "all" && `(${withdrawals.filter(w => w.status === f).length})`}
           </button>
         ))}
       </div>
 
-      <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtered.length === 0 ? <div style={{ background: "#fff", borderRadius: 20, padding: 32, textAlign: "center" }}><p style={{ color: "#8e8e93" }}>No withdrawals</p></div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 24 }}>
+        {filtered.length === 0 ? <div className="card" style={{ padding: 32, textAlign: "center" }}><p style={{ color: "var(--text-muted)" }}>No withdrawals</p></div>
           : filtered.map(w => (
-            <div key={w.id} style={{ background: "#fff", borderRadius: 16, overflow: "hidden" }}>
+            <div key={w.id} className="card" style={{ overflow: "hidden" }}>
               <div onClick={() => setExpanded(expanded === w.id ? null : w.id)}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", cursor: "pointer" }}>
                 <div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 3px" }}>${w.amountUsd.toFixed(2)} · {w.userName}</p>
-                  <p style={{ fontSize: 12, color: "#8e8e93", margin: "0 0 2px" }}>{w.method.toUpperCase()} · {new Date(w.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>${w.amountUsd.toFixed(2)} · {w.userName}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{w.method.toUpperCase()} · {new Date(w.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: sc[w.status], background: sb[w.status], borderRadius: 20, padding: "3px 10px" }}>{w.status.charAt(0).toUpperCase() + w.status.slice(1)}</span>
+                  <span className="badge" style={{ color: sc[w.status], background: sb[w.status] }}>{w.status.charAt(0).toUpperCase() + w.status.slice(1)}</span>
                   <span style={{ color: "#c7c7cc" }}>{expanded === w.id ? "▾" : "›"}</span>
                 </div>
               </div>
 
               {expanded === w.id && (
-                <div style={{ borderTop: "1px solid #f5f5f7", padding: "14px 16px" }}>
-                  {/* Account details */}
-                  <div style={{ background: "#f9f9f9", borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                <div style={{ borderTop: "1px solid var(--surface-alt)", padding: "14px 16px" }}>
+                  <div style={{ background: "var(--surface-alt)", borderRadius: 10, padding: 12, marginBottom: 12 }}>
                     {w.method !== "bank" && w.accountNumber && (
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
-                          <p style={{ fontSize: 11, color: "#8e8e93", margin: "0 0 2px", fontWeight: 600 }}>ACCOUNT NUMBER</p>
-                          <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>{w.accountNumber}</p>
+                          <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 2, fontWeight: 600 }}>ACCOUNT NUMBER</p>
+                          <p style={{ fontSize: 15, fontWeight: 700 }}>{w.accountNumber}</p>
                         </div>
-                        <button onClick={() => navigator.clipboard.writeText(w.accountNumber!)}
-                          style={{ background: "#fff", border: "1px solid #e5e5ea", borderRadius: 8, color: "#111", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>Copy</button>
+                        <button onClick={() => navigator.clipboard.writeText(w.accountNumber!)} className="btn btn-outline btn-sm">Copy</button>
                       </div>
                     )}
                     {w.method === "bank" && (
@@ -543,11 +563,10 @@ function WithdrawalsTab({ pw }: { pw: string }) {
                         {[["Account Holder", w.accountName], ["Account Number", w.accountNumber], ["Bank Name", w.bankName], ["Routing Number", w.routingNumber], ["District", w.district], ["Upazila", w.upazila]].filter(([, v]) => v).map(([l, v]) => (
                           <div key={String(l)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
-                              <p style={{ fontSize: 11, color: "#8e8e93", margin: "0 0 1px", fontWeight: 600 }}>{String(l).toUpperCase()}</p>
-                              <p style={{ fontSize: 14, fontWeight: 600, color: "#111", margin: 0 }}>{String(v)}</p>
+                              <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 1, fontWeight: 600 }}>{String(l).toUpperCase()}</p>
+                              <p style={{ fontSize: 14, fontWeight: 600 }}>{String(v)}</p>
                             </div>
-                            <button onClick={() => navigator.clipboard.writeText(String(v))}
-                              style={{ background: "#fff", border: "1px solid #e5e5ea", borderRadius: 8, color: "#111", fontSize: 11, padding: "4px 10px", cursor: "pointer" }}>Copy</button>
+                            <button onClick={() => navigator.clipboard.writeText(String(v))} className="btn btn-outline btn-sm">Copy</button>
                           </div>
                         ))}
                       </div>
@@ -555,17 +574,15 @@ function WithdrawalsTab({ pw }: { pw: string }) {
                   </div>
                   {w.status === "pending" && (
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => updateStatus(w.id, "paid")} disabled={processing === w.id}
-                        style={{ flex: 1, background: "#00C853", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, padding: "12px 0", cursor: "pointer" }}>
+                      <button onClick={() => updateStatus(w.id, "paid")} disabled={processing === w.id} className="btn btn-primary" style={{ flex: 1 }}>
                         {processing === w.id ? "…" : "✓ Mark Paid"}
                       </button>
-                      <button onClick={() => { const note = prompt("Rejection reason (optional):"); updateStatus(w.id, "rejected", note ?? undefined); }}
-                        style={{ flex: 1, background: "#fff0f0", border: "none", borderRadius: 12, color: "#ff3b30", fontSize: 14, fontWeight: 700, padding: "12px 0", cursor: "pointer" }}>
+                      <button onClick={() => { const note = prompt("Rejection reason (optional):"); updateStatus(w.id, "rejected", note ?? undefined); }} className="btn btn-danger-soft" style={{ flex: 1 }}>
                         ✕ Reject
                       </button>
                     </div>
                   )}
-                  {w.note && <p style={{ fontSize: 12, color: "#8e8e93", marginTop: 10 }}>Note: {w.note}</p>}
+                  {w.note && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>Note: {w.note}</p>}
                 </div>
               )}
             </div>
@@ -593,51 +610,44 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
     if (r.ok) setNewPassword("");
   }
 
-  const iStyle: React.CSSProperties = { width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "14px 16px", outline: "none" };
-  const lStyle: React.CSSProperties = { fontSize: 12, color: "#8e8e93", fontWeight: 600, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 };
-
   return (
     <div>
-      <div style={{ background: "#fff", padding: "52px 20px 16px", borderBottom: "1px solid #f0f0f0" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111", margin: 0 }}>Settings</h1>
-      </div>
-      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-        {msg && <div style={{ background: msg.startsWith("✓") ? "#e8faf0" : "#fff0f0", borderRadius: 12, padding: "10px 14px", color: msg.startsWith("✓") ? "#00C853" : "#ff3b30", fontSize: 13, fontWeight: 600 }}>{msg}</div>}
+      <div className="mobile-topbar"><h1>Settings</h1></div>
+      <div className="section-stack" style={{ maxWidth: 560 }}>
+        {msg && <div style={{ background: msg.startsWith("✓") ? "var(--primary-soft)" : "var(--danger-soft)", borderRadius: 12, padding: "10px 14px", color: msg.startsWith("✓") ? "var(--primary-dark)" : "var(--danger)", fontSize: 13, fontWeight: 600 }}>{msg}</div>}
 
         <form onSubmit={save} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>Profile</p>
-            <div><label style={lStyle}>Display Name</label><input style={iStyle} value={settings.displayName} onChange={e => setSettings(p => ({ ...p, displayName: e.target.value }))} /></div>
-            <div>
-              <label style={lStyle}>Username (your payment page URL)</label>
-              <input style={iStyle} value={settings.username} onChange={e => setSettings(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} placeholder="queen" />
-              {settings.username && <p style={{ fontSize: 12, color: "#00C853", marginTop: 4 }}>pay-cash.shop/pay/{settings.username}</p>}
+          <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ fontSize: 15, fontWeight: 700 }}>Profile</p>
+            <div className="field"><label className="field-label">Display Name</label><input className="input" value={settings.displayName} onChange={e => setSettings(p => ({ ...p, displayName: e.target.value }))} /></div>
+            <div className="field">
+              <label className="field-label">Username (your payment page URL)</label>
+              <input className="input" value={settings.username} onChange={e => setSettings(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} placeholder="queen" />
+              {settings.username && <p className="hint">pay-cash.shop/pay/{settings.username}</p>}
             </div>
-            <div><label style={lStyle}>Recovery Email</label><input style={iStyle} type="email" value={settings.email} onChange={e => setSettings(p => ({ ...p, email: e.target.value }))} /></div>
-            <div><label style={lStyle}>New Password</label><input style={iStyle} type="password" placeholder="Leave blank to keep" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+            <div className="field"><label className="field-label">Recovery Email</label><input className="input" type="email" value={settings.email} onChange={e => setSettings(p => ({ ...p, email: e.target.value }))} /></div>
+            <div className="field"><label className="field-label">New Password</label><input className="input" type="password" placeholder="Leave blank to keep" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
           </div>
-          <div style={{ background: "#fff", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>Payment</p>
-            <div>
-              <label style={lStyle}>Hidden Fee %</label>
-              <input style={iStyle} type="number" step="0.1" min="0" value={settings.feePercentage} onChange={e => setSettings(p => ({ ...p, feePercentage: parseFloat(e.target.value) || 0 }))} />
-              <p style={{ fontSize: 12, color: "#8e8e93", marginTop: 4 }}>e.g. 3% on $100 = customer pays $103</p>
+          <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ fontSize: 15, fontWeight: 700 }}>Payment</p>
+            <div className="field">
+              <label className="field-label">Hidden Fee %</label>
+              <input className="input" type="number" step="0.1" min="0" value={settings.feePercentage} onChange={e => setSettings(p => ({ ...p, feePercentage: parseFloat(e.target.value) || 0 }))} />
+              <p className="hint" style={{ color: "var(--text-muted)" }}>e.g. 3% on $100 = customer pays $103</p>
             </div>
           </div>
-          <div style={{ background: "#fff", borderRadius: 20, padding: 16 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#111", margin: "0 0 10px" }}>Webhook URL</p>
-            <div style={{ background: "#f5f5f7", borderRadius: 10, padding: "10px 12px", fontFamily: "monospace", fontSize: 12, color: "#111", wordBreak: "break-all", marginBottom: 8 }}>
+          <div className="card" style={{ padding: 16 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>Webhook URL</p>
+            <div style={{ background: "var(--surface-alt)", borderRadius: 10, padding: "10px 12px", fontFamily: "monospace", fontSize: 12, wordBreak: "break-all", marginBottom: 8 }}>
               https://www.pay-cash.shop/api/webhook/speed
             </div>
-            <button type="button" onClick={() => navigator.clipboard.writeText("https://www.pay-cash.shop/api/webhook/speed")}
-              style={{ background: "#f5f5f7", border: "none", borderRadius: 10, color: "#111", fontSize: 13, fontWeight: 600, padding: "8px 16px", cursor: "pointer" }}>📋 Copy</button>
+            <button type="button" onClick={() => navigator.clipboard.writeText("https://www.pay-cash.shop/api/webhook/speed")} className="btn btn-muted btn-sm">📋 Copy</button>
           </div>
-          <button type="submit" disabled={saving}
-            style={{ background: saving ? "#8e8e93" : "#00C853", border: "none", borderRadius: 14, color: "#fff", fontSize: 16, fontWeight: 700, padding: "15px 0", cursor: saving ? "not-allowed" : "pointer" }}>
+          <button type="submit" disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
             {saving ? "Saving…" : "Save Settings"}
           </button>
         </form>
-        <button onClick={onLogout} style={{ background: "#fff", border: "none", borderRadius: 14, color: "#ff3b30", fontSize: 16, fontWeight: 700, padding: "15px 0", cursor: "pointer" }}>Sign Out</button>
+        <button onClick={onLogout} className="card btn" style={{ color: "var(--danger)", boxShadow: "var(--shadow-sm)" }}>Sign Out</button>
       </div>
     </div>
   );

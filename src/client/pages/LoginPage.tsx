@@ -24,28 +24,39 @@ export default function LoginPage() {
     finally { setLoading(false); }
   }
 
-  const iStyle: React.CSSProperties = { width: "100%", background: "#f5f5f7", border: "none", borderRadius: 12, color: "#111", fontSize: 15, padding: "14px 16px", outline: "none" };
-
   return (
-    <div style={{ background: "#f5f5f7", minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: "#fff", borderRadius: 24, padding: "36px 28px", width: "100%", maxWidth: 380, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", textAlign: "center" }}>
-        <img src="/cashapp-logo.png" width={60} height={60} alt="" style={{ borderRadius: 14, margin: "0 auto 16px", display: "block" }} />
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111", marginBottom: 4 }}>Login</h1>
-        <p style={{ color: "#888", fontSize: 14, marginBottom: 28 }}>Pay Cash Sub-Admin</p>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
-          <input style={iStyle} type="text" placeholder="Username or Email" value={form.usernameOrEmail}
-            onChange={e => setForm(p => ({ ...p, usernameOrEmail: e.target.value }))} required />
-          <input style={iStyle} type="password" placeholder="Password" value={form.password}
-            onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
-          {error && <p style={{ color: "#ff3b30", fontSize: 13 }}>{error}</p>}
-          <button type="submit" disabled={loading}
-            style={{ background: loading ? "#8e8e93" : "#00C853", border: "none", borderRadius: 14, color: "#fff", fontSize: 16, fontWeight: 700, padding: "15px 0", cursor: loading ? "not-allowed" : "pointer" }}>
-            {loading ? "Logging in…" : "Login"}
-          </button>
-        </form>
-        <p style={{ marginTop: 20, fontSize: 14, color: "#888" }}>
-          Don't have an account? <Link to="/signup" style={{ color: "#00C853", fontWeight: 600, textDecoration: "none" }}>Sign Up</Link>
-        </p>
+    <div className="auth-page">
+      <div className="auth-visual">
+        <div className="auth-visual-brand">
+          <img src="/cashapp-logo.png" alt="" />
+          <span>Pay Cash</span>
+        </div>
+        <div className="auth-visual-copy">
+          <h2>Manage your Cash App payments in one place.</h2>
+          <p>Track incoming payments, generate QR pay pages, and withdraw your balance — all from a single dashboard.</p>
+        </div>
+        <div className="auth-visual-foot">Sub-admin access · Pay Cash</div>
+      </div>
+
+      <div className="auth-form-side">
+        <div className="auth-card">
+          <img className="logo" src="/cashapp-logo.png" alt="" />
+          <h1>Login</h1>
+          <p className="subtitle">Pay Cash Sub-Admin</p>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <input className="input" type="text" placeholder="Username or Email" value={form.usernameOrEmail}
+              onChange={e => setForm(p => ({ ...p, usernameOrEmail: e.target.value }))} required />
+            <input className="input" type="password" placeholder="Password" value={form.password}
+              onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
+            {error && <p className="error-text">{error}</p>}
+            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+              {loading ? "Logging in…" : "Login"}
+            </button>
+          </form>
+          <p className="auth-foot">
+            Don't have an account? <Link to="/signup">Sign Up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
