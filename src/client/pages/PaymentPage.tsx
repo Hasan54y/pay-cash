@@ -49,7 +49,6 @@ export default function PaymentPage() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [inAppBrowser] = useState(detectInAppBrowser);
   const esRef = useRef<EventSource | null>(null);
 
   // The customer-facing payment page always renders in the light/white theme,
@@ -178,12 +177,6 @@ export default function PaymentPage() {
           </div>
           <p className="send-money-name">{displayName || " "}</p>
         </div>
-
-        {inAppBrowser && (
-          <p style={{ fontSize: 12, color: "var(--warning-soft-text)", background: "var(--warning-soft)", borderRadius: 10, padding: "8px 14px", margin: "0 20px 12px", textAlign: "center" }}>
-            Opened from {inAppBrowser}. If Cash App doesn't open after paying, tap ⋯ (or the browser icon) above and choose "Open in Browser".
-          </p>
-        )}
 
         <p className="send-money-amount">${amountStr === "" ? "0" : amountStr}</p>
 
