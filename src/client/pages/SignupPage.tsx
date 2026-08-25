@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import ThemeToggle from "./../theme";
 
 export default function SignupPage() {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", displayName: "", username: "", password: "" });
@@ -24,6 +25,7 @@ export default function SignupPage() {
 
   if (success) return (
     <div className="auth-page">
+      <ThemeToggle />
       <div className="auth-visual">
         <div className="auth-visual-brand">
           <img src="/cashapp-logo.png" alt="" />
@@ -54,6 +56,7 @@ export default function SignupPage() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle />
       <div className="auth-visual">
         <div className="auth-visual-brand">
           <img src="/cashapp-logo.png" alt="" />

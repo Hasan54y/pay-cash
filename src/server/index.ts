@@ -22,6 +22,14 @@ function makeShortId(id: string) {
   return id.slice(0, 10).split("_").map((s) => s ? s[0].toUpperCase() + s.slice(1) : s).join("_");
 }
 
+// Deterministic avatar color per user, kept in sync with the client's avatarColor()
+const AVATAR_COLORS = ["#FE4438", "#FFC400", "#0A84FF", "#8B5CF6"];
+function avatarColor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
 async function getSetting(key: string): Promise<string | null> {
   const [row] = await db.select({ value: settingsTable.value }).from(settingsTable).where(eq(settingsTable.key, key));
   return row?.value ?? null;
@@ -80,31 +88,38 @@ app.get("/og-image.svg", async (req, res) => {
   // Get username from query or use admin default
   const username = req.query.u as string | undefined;
   let displayName = (await getSetting("display_name")) ?? "Pay Cash";
+  let profilePic: string | null = (await getSetting("profile_pic")) ?? null;
+  let colorSeed = username ?? "pay-cash";
 
   if (username) {
     // Try to get sub-admin display name
-    const [user] = await db.select({ displayName: usersTable.displayName })
+    const [user] = await db.select({ displayName: usersTable.displayName, profilePic: usersTable.profilePic })
       .from(usersTable).where(and(eq(usersTable.username, username), eq(usersTable.status, "active")));
-    if (user) displayName = user.displayName;
+    if (user) { displayName = user.displayName; profilePic = user.profilePic; }
   }
 
   const initial = displayName.trim()[0]?.toUpperCase() ?? "P";
+  const circleColor = avatarColor(colorSeed);
 
   // Scale down the display name's font size if it's long, so it never overflows the 1200-wide canvas
   const nameFontSize = displayName.length > 10 ? Math.max(60, Math.round(1230 / displayName.length)) : 123;
 
   // Pixel-matched to the reference sample image via sub-pixel circle-fit + cap-height measurement (scaled to a 1200x630 canvas)
+  const avatarMarkup = profilePic
+    ? `<clipPath id="avatarClip"><circle cx="161.4" cy="51.2" r="102.5"/></clipPath>
+  <image href="${profilePic}" x="58.9" y="-51.3" width="205" height="205" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<circle cx="161.4" cy="51.2" r="102.5" fill="${circleColor}"/>
+  <text x="161.4" y="51.2"
+    font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
+    font-size="117" font-weight="900" fill="white"
+    text-anchor="middle" dominant-baseline="middle">${initial}</text>`;
+
   const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <!-- Green background -->
   <rect width="1200" height="630" fill="#00DC13"/>
 
-  <!-- Red circle top-left, partially cut off at top -->
-  <circle cx="161.4" cy="51.2" r="102.5" fill="#FE0000"/>
-  <!-- First letter centered in the circle -->
-  <text x="161.4" y="51.2"
-    font-family="SF Pro Display, Helvetica Neue, Arial, sans-serif"
-    font-size="117" font-weight="900" fill="white"
-    text-anchor="middle" dominant-baseline="middle">${initial}</text>
+  <!-- Avatar circle top-left, partially cut off at top: uploaded photo if set, else color-coded initial -->
+  ${avatarMarkup}
 
   <!-- Black rounded square top-right, cut off at top -->
   <rect x="1020.2" y="-42.3" width="121.7" height="121.7" rx="22.4" fill="#000000"/>
@@ -188,16 +203,17 @@ app.get("/api/pay/:username", async (req, res) => {
 
   // Check sub-admin users first
   const [user] = await db.select({
-    displayName: usersTable.displayName, username: usersTable.username, id: usersTable.id
+    displayName: usersTable.displayName, username: usersTable.username, id: usersTable.id, profilePic: usersTable.profilePic,
   }).from(usersTable).where(and(eq(usersTable.username, slug), eq(usersTable.status, "active")));
 
-  if (user) { res.json({ displayName: user.displayName, username: user.username, id: user.id }); return; }
+  if (user) { res.json({ displayName: user.displayName, username: user.username, id: user.id, profilePic: user.profilePic }); return; }
 
   // Check if it matches admin username
   const adminUsername = (await getSetting("admin_username")) ?? "";
   if (adminUsername && slug === adminUsername) {
     const displayName = (await getSetting("display_name")) ?? "Pay Cash";
-    res.json({ displayName, username: adminUsername, id: null });
+    const profilePic = (await getSetting("profile_pic")) ?? null;
+    res.json({ displayName, username: adminUsername, id: null, profilePic });
     return;
   }
 
@@ -208,7 +224,8 @@ app.get("/api/pay/:username", async (req, res) => {
 app.get("/api/public", async (_req, res) => {
   const displayName = (await getSetting("display_name")) ?? "";
   const username = (await getSetting("admin_username")) ?? "";
-  res.json({ displayName, username });
+  const profilePic = (await getSetting("profile_pic")) ?? null;
+  res.json({ displayName, username, profilePic });
 });
 
 app.post("/api/invoices", async (req, res) => {
@@ -318,6 +335,7 @@ app.get("/api/dashboard/me", async (req, res) => {
     username: user.username, email: user.email, phone: user.phone,
     balance: parseFloat(String(user.balance)),
     bdtRate: parseFloat(String(user.bdtRate ?? 120)),
+    profilePic: user.profilePic,
   });
 });
 
@@ -385,7 +403,7 @@ app.put("/api/dashboard/settings", async (req, res) => {
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const { displayName, username, newPassword, currentPassword } = req.body as Record<string, string>;
+  const { displayName, username, newPassword, currentPassword, profilePic } = req.body as Record<string, string>;
   if (!await bcrypt.compare(currentPassword, user.passwordHash)) {
     res.status(401).json({ error: "Current password incorrect" }); return;
   }
@@ -400,6 +418,7 @@ app.put("/api/dashboard/settings", async (req, res) => {
     updates.username = slug;
   }
   if (newPassword && newPassword.length >= 6) updates.passwordHash = await bcrypt.hash(newPassword, 10);
+  if (profilePic !== undefined) updates.profilePic = profilePic || null;
   if (Object.keys(updates).length) await db.update(usersTable).set(updates).where(eq(usersTable.id, user.id));
   res.json({ success: true });
 });
@@ -419,19 +438,21 @@ app.get("/api/admin/settings", async (req, res) => {
     username: (await getSetting("admin_username")) ?? "",
     feePercentage: parseFloat((await getSetting("fee_percentage")) ?? "0"),
     email: (await getSetting("recovery_email")) ?? "",
+    profilePic: (await getSetting("profile_pic")) ?? null,
   });
 });
 
 app.put("/api/admin/settings", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const { displayName, username, newPassword, feePercentage, email, currentPassword } = req.body as Record<string, string>;
+  const { displayName, username, newPassword, feePercentage, email, currentPassword, profilePic } = req.body as Record<string, string>;
   if (!await verifyAdmin(currentPassword)) { res.status(401).json({ error: "Wrong password" }); return; }
   if (displayName !== undefined) await setSetting("display_name", displayName.trim());
   if (username !== undefined) await setSetting("admin_username", username.trim().toLowerCase());
   if (newPassword && newPassword.length >= 6) await setSetting("admin_password_hash", await bcrypt.hash(newPassword, 10));
   if (feePercentage !== undefined) await setSetting("fee_percentage", feePercentage);
   if (email !== undefined) await setSetting("recovery_email", email);
+  if (profilePic !== undefined) await setSetting("profile_pic", profilePic);
   res.json({ success: true });
 });
 
@@ -481,13 +502,14 @@ app.get("/api/admin/users", async (req, res) => {
 app.put("/api/admin/users/:id", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const { status, bdtRate, newPassword, clearBalance, feePercentage } = req.body as Record<string, string>;
+  const { status, bdtRate, newPassword, clearBalance, feePercentage, balance } = req.body as Record<string, string>;
   const updates: Partial<typeof usersTable.$inferInsert> = {};
   if (status) updates.status = status as "active" | "pending" | "rejected" | "suspended";
   if (bdtRate) updates.bdtRate = bdtRate;
   if (feePercentage !== undefined && feePercentage !== "") updates.feePercentage = feePercentage;
   if (newPassword && newPassword.length >= 6) updates.passwordHash = await bcrypt.hash(newPassword, 10);
   if (clearBalance === "true") updates.balance = "0";
+  else if (balance !== undefined && balance !== "" && !isNaN(parseFloat(balance))) updates.balance = String(Math.max(0, parseFloat(balance)));
   await db.update(usersTable).set(updates).where(eq(usersTable.id, req.params.id));
   res.json({ success: true });
 });

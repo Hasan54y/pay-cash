@@ -1,6 +1,10 @@
 import { registerPush } from "./../push";
 import QRCanvas from "./../QRCanvas";
 import { downloadQRCard } from "./../qrRenderer";
+import ThemeToggle from "./../theme";
+import { MilestonesCard } from "./../Milestones";
+import { Avatar } from "./../Avatar";
+import { fileToDataUrl } from "./../imageUpload";
 import { useState, useEffect, useRef } from "react";
 
 // Vector Icons
@@ -15,7 +19,7 @@ type Tab = "home" | "payments" | "users" | "withdrawals" | "settings";
 
 interface Payment { id: string; shortId: string; amountUsd: number; amountSats: number; status: string; createdAt: string; paidAt: string | null; checkedBy: string | null; lightningInvoice: string; subadminName: string | null; subadminUsername: string | null; }
 interface AdminData { payments: Payment[]; totalRevenue: number; }
-interface User { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; feePercentage?: number; status: string; createdAt: string; }
+interface User { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; feePercentage?: number; status: string; createdAt: string; profilePic?: string | null; }
 interface Withdrawal { id: string; userId: string; amountUsd: number; method: string; accountNumber: string | null; accountName: string | null; bankName: string | null; routingNumber: string | null; district: string | null; upazila: string | null; status: string; createdAt: string; paidAt: string | null; userName: string; userUsername: string; note: string | null; }
 
 const NAV_ITEMS: { key: Tab; label: string; icon: (on: boolean) => React.ReactNode }[] = [
@@ -53,6 +57,7 @@ export default function AdminPage() {
 
   if (!authed) return (
     <div className="auth-page">
+      <ThemeToggle />
       <div className="auth-visual">
         <div className="auth-visual-brand">
           <img src="/cashapp-logo.png" alt="" />
@@ -81,6 +86,7 @@ export default function AdminPage() {
 
   return (
     <div className="shell">
+      <ThemeToggle />
       <nav className="sidebar">
         <div className="sidebar-brand">
           <img src="/cashapp-logo.png" alt="" />
@@ -201,6 +207,8 @@ function HomeTab({ pw }: { pw: string }) {
             <p className="stat-sub">payments</p>
           </div>
         </div>
+
+        <MilestonesCard payments={payments} totalRevenue={totalRevenue} />
 
         <div className="two-col">
           <div className="card" style={{ padding: 16 }}>
@@ -387,7 +395,7 @@ function PaymentRowAdmin({ p, isChecked, onToggle, sc, sb, sl }: { p: Payment; i
 function UsersTab({ pw }: { pw: string }) {
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState({ bdtRate: "", feePercentage: "", newPassword: "", status: "" });
+  const [editForm, setEditForm] = useState({ bdtRate: "", feePercentage: "", newPassword: "", status: "", balance: "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -447,7 +455,7 @@ function UsersTab({ pw }: { pw: string }) {
                 <span className="badge" style={{ color: statusColor[u.status], background: statusBg[u.status] }}>{u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), feePercentage: String(u.feePercentage ?? 0), newPassword: "", status: u.status }); }} className="btn btn-muted btn-sm">Edit</button>
+                <button onClick={() => { setEditing(u); setEditForm({ bdtRate: String(u.bdtRate), feePercentage: String(u.feePercentage ?? 0), newPassword: "", status: u.status, balance: String(u.balance) }); }} className="btn btn-muted btn-sm">Edit</button>
                 {u.status === "active" && <button onClick={() => updateUser(u.id, { status: "suspended" })} className="btn btn-danger-soft btn-sm">Suspend</button>}
                 {u.status === "suspended" && <button onClick={() => updateUser(u.id, { status: "active" })} className="btn btn-success-soft btn-sm">Activate</button>}
                 <button onClick={() => { if (confirm(`Clear $${u.balance.toFixed(2)} balance for ${u.displayName}?`)) updateUser(u.id, { clearBalance: "true" }); }} className="btn btn-sm" style={{ background: "var(--warning-soft)", color: "#b45309" }}>Clear Balance</button>
@@ -466,6 +474,11 @@ function UsersTab({ pw }: { pw: string }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div className="field">
+                <label className="field-label">BALANCE (USD)</label>
+                <input className="input" type="number" step="0.01" min="0" value={editForm.balance} onChange={e => setEditForm(p => ({ ...p, balance: e.target.value }))} />
+                <p className="hint" style={{ color: "var(--text-muted)" }}>Directly sets the sub-admin's present balance.</p>
+              </div>
+              <div className="field">
                 <label className="field-label">BDT RATE (per $1)</label>
                 <input className="input" type="number" value={editForm.bdtRate} onChange={e => setEditForm(p => ({ ...p, bdtRate: e.target.value }))} />
               </div>
@@ -478,7 +491,7 @@ function UsersTab({ pw }: { pw: string }) {
                 <label className="field-label">NEW PASSWORD (optional)</label>
                 <input className="input" type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e => setEditForm(p => ({ ...p, newPassword: e.target.value }))} />
               </div>
-              <button onClick={() => updateUser(editing.id, { bdtRate: editForm.bdtRate, feePercentage: editForm.feePercentage, ...(editForm.newPassword ? { newPassword: editForm.newPassword } : {}) })}
+              <button onClick={() => updateUser(editing.id, { bdtRate: editForm.bdtRate, feePercentage: editForm.feePercentage, balance: editForm.balance, ...(editForm.newPassword ? { newPassword: editForm.newPassword } : {}) })}
                 disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
                 {saving ? "Saving…" : "Save Changes"}
               </button>
@@ -593,7 +606,7 @@ function WithdrawalsTab({ pw }: { pw: string }) {
 }
 
 function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
-  const [settings, setSettings] = useState({ displayName: "", username: "", feePercentage: 0, email: "" });
+  const [settings, setSettings] = useState<{ displayName: string; username: string; feePercentage: number; email: string; profilePic: string | null }>({ displayName: "", username: "", feePercentage: 0, email: "", profilePic: null });
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -601,6 +614,14 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
   useEffect(() => {
     fetch("/api/admin/settings", { headers: { "x-admin-password": pw } }).then(r => r.json()).then(setSettings);
   }, []);
+
+  async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { const url = await fileToDataUrl(file); setSettings(p => ({ ...p, profilePic: url })); }
+    catch { setMsg("Couldn't read that image"); }
+    e.target.value = "";
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setMsg("");
@@ -619,6 +640,13 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
         <form onSubmit={save} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 15, fontWeight: 700 }}>Profile</p>
+            <label className="avatar-upload">
+              <Avatar name={settings.displayName || "Pay Cash"} img={settings.profilePic} seed={settings.username || "pay-cash"} size={72} />
+              <span className="avatar-upload-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              </span>
+              <input type="file" accept="image/*" onChange={onPickPhoto} />
+            </label>
             <div className="field"><label className="field-label">Display Name</label><input className="input" value={settings.displayName} onChange={e => setSettings(p => ({ ...p, displayName: e.target.value }))} /></div>
             <div className="field">
               <label className="field-label">Username (your payment page URL)</label>

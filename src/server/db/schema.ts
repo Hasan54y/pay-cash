@@ -13,6 +13,7 @@ export const usersTable = pgTable("users", {
   bdtRate: numeric("bdt_rate", { precision: 10, scale: 2 }).default("120"),
   feePercentage: numeric("fee_percentage", { precision: 5, scale: 2 }).default("0"),
   balance: numeric("balance", { precision: 10, scale: 2 }).notNull().default("0"),
+  profilePic: text("profile_pic"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

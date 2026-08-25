@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import ThemeToggle from "./../theme";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ usernameOrEmail: "", password: "" });
@@ -26,6 +27,7 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle />
       <div className="auth-visual">
         <div className="auth-visual-brand">
           <img src="/cashapp-logo.png" alt="" />

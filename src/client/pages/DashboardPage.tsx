@@ -3,10 +3,14 @@ import { useNavigate } from "react-router-dom";
 import QRCanvas from "./../QRCanvas";
 import { downloadQRCard } from "./../qrRenderer";
 import { registerPush } from "./../push";
+import ThemeToggle from "./../theme";
+import { MilestonesCard } from "./../Milestones";
+import { Avatar } from "./../Avatar";
+import { fileToDataUrl } from "./../imageUpload";
 
 type Tab = "home" | "payments" | "paypage" | "settings";
 
-interface UserInfo { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; }
+interface UserInfo { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; profilePic: string | null; }
 interface Payment { id: string; shortId: string; amountUsd: number; amountSats: number; status: string; createdAt: string; paidAt: string | null; checkedBy: string | null; lightningInvoice: string; }
 interface Withdrawal { id: string; amountUsd: number; method: string; status: string; createdAt: string; }
 interface DashboardData { payments: Payment[]; totalRevenue: number; }
@@ -46,6 +50,7 @@ export default function DashboardPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [tab, setTab] = useState<Tab>("home");
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [paymentsFilter, setPaymentsFilter] = useState<"all" | "paid" | "pending" | "expired" | "withdraw">("all");
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
@@ -111,8 +116,36 @@ export default function DashboardPage() {
     );
   }
 
+  const wsc: Record<string, string> = { paid: "var(--primary-dark)", pending: "#b45309", rejected: "var(--danger)" };
+  const wsb: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", rejected: "var(--danger-soft)" };
+
+  function WithdrawalRow({ w }: { w: Withdrawal }) {
+    return (
+      <div className="list-row">
+        <div>
+          <p className="row-title">${w.amountUsd.toFixed(2)}</p>
+          <p className="row-sub">{w.method.toUpperCase()} · {new Date(w.createdAt).toLocaleDateString()}</p>
+        </div>
+        <span className="badge" style={{ color: wsc[w.status] ?? "var(--text-muted)", background: wsb[w.status] ?? "var(--surface-alt)" }}>
+          {w.status.charAt(0).toUpperCase() + w.status.slice(1)}
+        </span>
+      </div>
+    );
+  }
+
+  const paymentCounts = {
+    all: payments.filter(p => p.status !== "expired").length,
+    paid: payments.filter(p => p.status === "paid").length,
+    pending: payments.filter(p => p.status === "pending").length,
+    expired: payments.filter(p => p.status === "expired").length,
+  };
+  const filteredPayments = paymentsFilter === "all" || paymentsFilter === "withdraw"
+    ? payments.filter(p => p.status !== "expired")
+    : payments.filter(p => p.status === paymentsFilter);
+
   return (
     <div className="shell">
+      <ThemeToggle />
       <nav className="sidebar">
         <div className="sidebar-brand">
           <img src="/cashapp-logo.png" alt="" />
@@ -169,6 +202,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
+                <MilestonesCard payments={payments} totalRevenue={totalRevenue} />
+
                 <div className="card" style={{ padding: 16 }}>
                   <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Recent Transactions</p>
                   {payments.slice(0, 10).length === 0
@@ -185,12 +220,36 @@ export default function DashboardPage() {
           {tab === "payments" && (
             <div>
               <div className="mobile-topbar"><h1>All Payments</h1></div>
+              <div className="chip-row" style={{ padding: "0 16px 12px" }}>
+                {([
+                  ["all", "All", paymentCounts.all],
+                  ["paid", "Completed", paymentCounts.paid],
+                  ["pending", "Pending", paymentCounts.pending],
+                  ["expired", "Expired", paymentCounts.expired],
+                  ["withdraw", "Withdraw", withdrawals.length],
+                ] as const).map(([key, label, count]) => (
+                  <button key={key} onClick={() => setPaymentsFilter(key)} className={`chip ${paymentsFilter === key ? "active" : ""}`}>
+                    {label} ({count})
+                  </button>
+                ))}
+              </div>
               <div className="section-stack">
-                {payments.length === 0
-                  ? <div className="card" style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--text-muted)" }}>No payments yet</p></div>
-                  : <div className="card" style={{ padding: "4px 16px" }}>
-                    {payments.map(p => <PaymentRow key={p.id} p={p} />)}
-                  </div>}
+                {paymentsFilter === "withdraw" ? (
+                  <>
+                    <button onClick={() => setShowWithdraw(true)} className="btn btn-primary btn-pill btn-sm" style={{ alignSelf: "flex-start" }}>+ New Withdrawal</button>
+                    {withdrawals.length === 0
+                      ? <div className="card" style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--text-muted)" }}>No withdrawals yet</p></div>
+                      : <div className="card" style={{ padding: "4px 16px" }}>
+                        {withdrawals.map(w => <WithdrawalRow key={w.id} w={w} />)}
+                      </div>}
+                  </>
+                ) : (
+                  filteredPayments.length === 0
+                    ? <div className="card" style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--text-muted)" }}>No payments</p></div>
+                    : <div className="card" style={{ padding: "4px 16px" }}>
+                      {filteredPayments.map(p => <PaymentRow key={p.id} p={p} />)}
+                    </div>
+                )}
               </div>
             </div>
           )}
@@ -366,10 +425,18 @@ function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw 
   token: string; user: UserInfo; onUpdate: () => void; onLogout: () => void;
   withdrawals: Withdrawal[]; onWithdraw: () => void;
 }) {
-  const [form, setForm] = useState({ displayName: user.displayName, username: user.username, currentPassword: "", newPassword: "" });
+  const [form, setForm] = useState({ displayName: user.displayName, username: user.username, currentPassword: "", newPassword: "", profilePic: user.profilePic ?? "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [showContact, setShowContact] = useState(false);
+
+  async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { const url = await fileToDataUrl(file); setForm(p => ({ ...p, profilePic: url })); }
+    catch { setMsg("Couldn't read that image"); }
+    e.target.value = "";
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setMsg("");
@@ -391,6 +458,13 @@ function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw 
 
           <form onSubmit={save} className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 15, fontWeight: 700 }}>Profile</p>
+            <label className="avatar-upload">
+              <Avatar name={form.displayName || user.displayName} img={form.profilePic || null} seed={user.username} size={72} />
+              <span className="avatar-upload-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+              </span>
+              <input type="file" accept="image/*" onChange={onPickPhoto} />
+            </label>
             <div className="field"><label className="field-label">Display Name</label><input className="input" value={form.displayName} onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))} /></div>
             <div className="field">
               <label className="field-label">Username</label>
