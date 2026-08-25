@@ -61,9 +61,6 @@ export default function PaymentPage() {
   async function handlePay() {
     if (!valid || loading || pending) return;
     setError(null); setLoading(true);
-    // Open the tab synchronously (still inside the click's user-gesture window) so the
-    // eventual CashApp redirect isn't blocked by the popup blocker once the invoice call resolves.
-    const cashAppTab = window.open("", "_blank");
     try {
       const r = await fetch("/api/invoices", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -72,9 +69,13 @@ export default function PaymentPage() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Failed");
       setInvoice(d);
-      if (cashAppTab) cashAppTab.location.href = `https://cash.app/launch/lightning/${d.lightningInvoice}`;
+      // Same-tab navigation, not window.open(): in-app browsers (Messenger, Instagram,
+      // TikTok, etc.) are single-context WebViews that silently block window.open(), so
+      // this is the only redirect method that works everywhere. When Cash App is
+      // installed, the OS intercepts this as a deep link before the page actually
+      // navigates away, so this page (and its payment-status polling) stays alive.
+      window.location.href = `https://cash.app/launch/lightning/${d.lightningInvoice}`;
     } catch (e) {
-      cashAppTab?.close();
       setError(e instanceof Error ? e.message : "Error");
     } finally { setLoading(false); }
   }
