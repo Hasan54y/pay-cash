@@ -7,6 +7,37 @@ interface Receipt { amountUsd: number; displayName: string; shortId: string; lig
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"];
 
+// In-app browsers (Messenger, Instagram, TikTok, etc.) embed a restricted WebView that
+// deliberately intercepts and suppresses "Universal Link" navigation to keep visitors
+// inside the host app, so a plain https redirect to Cash App can silently no-op there.
+function detectInAppBrowser(): string | null {
+  const ua = navigator.userAgent || "";
+  if (/FBAN|FBAV|FB_IAB|Messenger/i.test(ua)) return "Messenger/Facebook";
+  if (/Instagram/i.test(ua)) return "Instagram";
+  if (/(musical_ly|TikTok|BytedanceWebview)/i.test(ua)) return "TikTok";
+  if (/Line\//i.test(ua)) return "LINE";
+  if (/MicroMessenger/i.test(ua)) return "WeChat";
+  if (/Twitter/i.test(ua)) return "X (Twitter)";
+  if (/LinkedInApp/i.test(ua)) return "LinkedIn";
+  if (/Snapchat/i.test(ua)) return "Snapchat";
+  return null;
+}
+const isAndroid = () => /Android/i.test(navigator.userAgent || "");
+
+function goToCashApp(lightningInvoice: string) {
+  const url = `https://cash.app/launch/lightning/${lightningInvoice}`;
+  if (detectInAppBrowser() && isAndroid()) {
+    // Escape the restrictive in-app WebView via Android's own intent resolver, which
+    // (unlike the WebView) honors App Links and opens Cash App directly if installed.
+    const bare = url.replace(/^https?:\/\//, "");
+    window.location.href = `intent://${bare}#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(url)};end;`;
+    return;
+  }
+  // Plain redirect: works in real browsers, and on iOS this is also the only option —
+  // there's no client-side equivalent to Android's intent escape.
+  window.location.href = url;
+}
+
 export default function PaymentPage() {
   const { username } = useParams<{ username: string }>();
   const [displayName, setDisplayName] = useState("");
@@ -18,6 +49,7 @@ export default function PaymentPage() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inAppBrowser] = useState(detectInAppBrowser);
   const esRef = useRef<EventSource | null>(null);
 
   // The customer-facing payment page always renders in the light/white theme,
@@ -69,12 +101,12 @@ export default function PaymentPage() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Failed");
       setInvoice(d);
-      // Same-tab navigation, not window.open(): in-app browsers (Messenger, Instagram,
-      // TikTok, etc.) are single-context WebViews that silently block window.open(), so
-      // this is the only redirect method that works everywhere. When Cash App is
-      // installed, the OS intercepts this as a deep link before the page actually
-      // navigates away, so this page (and its payment-status polling) stays alive.
-      window.location.href = `https://cash.app/launch/lightning/${d.lightningInvoice}`;
+      // Same-tab navigation, not window.open(): in-app browsers are single-context
+      // WebViews that silently block window.open(). When Cash App is installed and the
+      // OS (not a restrictive host app) handles this link, it intercepts the deep link
+      // before the page actually navigates away, so this page's payment-status polling
+      // stays alive underneath.
+      goToCashApp(d.lightningInvoice);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally { setLoading(false); }
@@ -146,6 +178,12 @@ export default function PaymentPage() {
           </div>
           <p className="send-money-name">{displayName || " "}</p>
         </div>
+
+        {inAppBrowser && (
+          <p style={{ fontSize: 12, color: "var(--warning-soft-text)", background: "var(--warning-soft)", borderRadius: 10, padding: "8px 14px", margin: "0 20px 12px", textAlign: "center" }}>
+            Opened from {inAppBrowser}. If Cash App doesn't open after paying, tap ⋯ (or the browser icon) above and choose "Open in Browser".
+          </p>
+        )}
 
         <p className="send-money-amount">${amountStr === "" ? "0" : amountStr}</p>
 
