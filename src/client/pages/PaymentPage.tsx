@@ -7,35 +7,10 @@ interface Receipt { amountUsd: number; displayName: string; shortId: string; lig
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"];
 
-// In-app browsers (Messenger, Instagram, TikTok, etc.) embed a restricted WebView that
-// deliberately intercepts and suppresses "Universal Link" navigation to keep visitors
-// inside the host app, so a plain https redirect to Cash App can silently no-op there.
-function detectInAppBrowser(): string | null {
-  const ua = navigator.userAgent || "";
-  if (/FBAN|FBAV|FB_IAB|Messenger/i.test(ua)) return "Messenger/Facebook";
-  if (/Instagram/i.test(ua)) return "Instagram";
-  if (/(musical_ly|TikTok|BytedanceWebview)/i.test(ua)) return "TikTok";
-  if (/Line\//i.test(ua)) return "LINE";
-  if (/MicroMessenger/i.test(ua)) return "WeChat";
-  if (/Twitter/i.test(ua)) return "X (Twitter)";
-  if (/LinkedInApp/i.test(ua)) return "LinkedIn";
-  if (/Snapchat/i.test(ua)) return "Snapchat";
-  return null;
-}
-const isAndroid = () => /Android/i.test(navigator.userAgent || "");
-
 function goToCashApp(lightningInvoice: string) {
-  const url = `https://cash.app/launch/lightning/${lightningInvoice}`;
-  if (detectInAppBrowser() && isAndroid()) {
-    // Escape the restrictive in-app WebView via Android's own intent resolver, which
-    // (unlike the WebView) honors App Links and opens Cash App directly if installed.
-    const bare = url.replace(/^https?:\/\//, "");
-    window.location.href = `intent://${bare}#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(url)};end;`;
-    return;
-  }
-  // Plain redirect: works in real browsers, and on iOS this is also the only option —
-  // there's no client-side equivalent to Android's intent escape.
-  window.location.href = url;
+  // Same-tab, plain navigation only — no window.open, no intent:// resolver tricks,
+  // so there's nothing that can spawn a new tab or a native chooser/permission prompt.
+  window.location.href = `https://cash.app/launch/lightning/${lightningInvoice}`;
 }
 
 export default function PaymentPage() {
