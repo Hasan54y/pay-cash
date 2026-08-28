@@ -151,7 +151,10 @@ app.post("/api/push/subscribe", async (req, res) => {
   await db.insert(pushSubscriptionsTable).values({
     id: nanoid(), userId: userId ?? null,
     endpoint: subscription.endpoint, p256dh: subscription.keys.p256dh, auth: subscription.keys.auth,
-  }).onConflictDoNothing();
+  }).onConflictDoUpdate({
+    target: pushSubscriptionsTable.endpoint,
+    set: { userId: userId ?? null, p256dh: subscription.keys.p256dh, auth: subscription.keys.auth },
+  });
   res.json({ success: true });
 });
 
