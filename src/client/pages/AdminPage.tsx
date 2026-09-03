@@ -539,16 +539,27 @@ function SpeedWithdrawCard({ pw }: { pw: string }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState<{ amountUsd: number; feesSats: number | null } | null>(null);
+  const [balanceSats, setBalanceSats] = useState<number | null>(null);
+  const [btcPriceUsd, setBtcPriceUsd] = useState<number | null>(null);
 
   useEffect(() => {
     fetchHistory();
     fetch("/api/admin/speed-payout-address", { headers: { "x-admin-password": pw } })
       .then(r => r.json()).then((d: { address?: string }) => { if (d.address) setDestination(d.address); });
+    fetch("/api/admin/speed-balance", { headers: { "x-admin-password": pw } })
+      .then(r => r.json()).then((d: { balanceSats?: number; btcPriceUsd?: number }) => { setBalanceSats(d.balanceSats ?? 0); setBtcPriceUsd(d.btcPriceUsd ?? null); });
   }, []);
   async function fetchHistory() {
     const r = await fetch("/api/admin/speed-withdrawals", { headers: { "x-admin-password": pw } });
     if (r.ok) setHistory(await r.json());
   }
+
+  // Speed has no fee-quote API, so this estimates the net amount using the fee from
+  // your most recent successful withdrawal of the same method — a real observed
+  // figure, not a guess, but not a guarantee either since fees can vary per send.
+  const lastFeeForMethod = history.find(h => h.method === method && h.status === "paid" && h.feesSats != null)?.feesSats ?? null;
+  const requestedSats = amount && btcPriceUsd ? Math.round((parseFloat(amount) / btcPriceUsd) * 100000000) : null;
+  const estimatedNetSats = requestedSats != null && lastFeeForMethod != null ? Math.max(0, requestedSats - lastFeeForMethod) : null;
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -576,6 +587,11 @@ function SpeedWithdrawCard({ pw }: { pw: string }) {
         <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Sends directly to a Bitcoin address or Lightning destination — e.g. your Binance BTC deposit address (on-chain). No redemption step, single network fee.</p>
       </div>
 
+      <div style={{ background: "var(--surface-alt)", borderRadius: 10, padding: "10px 12px" }}>
+        <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, marginBottom: 2 }}>AVAILABLE</p>
+        <p style={{ fontSize: 16, fontWeight: 800 }}>{balanceSats != null ? `${balanceSats.toLocaleString()} sats` : "…"}</p>
+      </div>
+
       <form onSubmit={send} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div className="field">
           <label className="field-label">DESTINATION {method === "onchain" ? "(Bitcoin address)" : "(LN invoice / LN address)"}</label>
@@ -588,6 +604,14 @@ function SpeedWithdrawCard({ pw }: { pw: string }) {
           </select>
           <input className="input" type="number" step="0.01" min="1" placeholder="Amount (USD)" value={amount} onChange={e => setAmount(e.target.value)} required style={{ flex: 1 }} />
         </div>
+        {requestedSats != null && (
+          <p className="hint" style={{ color: "var(--text-muted)" }}>
+            ≈ {requestedSats.toLocaleString()} sats requested
+            {estimatedNetSats != null
+              ? ` — ~${estimatedNetSats.toLocaleString()} sats after fee (est. ${lastFeeForMethod!.toLocaleString()} sats, based on your last ${method} withdrawal)`
+              : ` — fee unknown until your first ${method} withdrawal completes (Speed has no fee-quote API)`}
+          </p>
+        )}
         <button type="submit" disabled={sending} className={`btn ${sending ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
           {sending ? "Sending…" : "Send"}
         </button>

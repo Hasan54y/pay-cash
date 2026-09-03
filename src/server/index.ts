@@ -660,11 +660,12 @@ app.get("/api/admin/speed-balance", async (req, res) => {
       if (cur === "SATS" || cur === "SAT") balanceSats += item.amount;
       else if (cur === "BTC") balanceSats += item.amount * 100000000;
     }
+    const btcPriceUsd = await getBtcUsdPrice();
     let balanceUsd = 0;
     if (balanceSats > 0) {
-      balanceUsd = Math.round((balanceSats / 100000000) * (await getBtcUsdPrice()) * 100) / 100;
+      balanceUsd = Math.round((balanceSats / 100000000) * btcPriceUsd * 100) / 100;
     }
-    res.json({ balanceUsd, balanceSats });
+    res.json({ balanceUsd, balanceSats, btcPriceUsd });
   } catch { res.status(500).json({ error: "Failed", balanceUsd: 0 }); }
 });
 
