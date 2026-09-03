@@ -1,4 +1,4 @@
-import { pgTable, text, numeric, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, numeric, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
@@ -33,7 +33,10 @@ export const paymentsTable = pgTable("payments", {
   checkedBy: text("checked_by"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   paidAt: timestamp("paid_at"),
-});
+}, (table) => ([
+  index("payments_user_id_created_at_idx").on(table.userId, table.createdAt),
+  index("payments_status_created_at_idx").on(table.status, table.createdAt),
+]));
 
 export const withdrawalsTable = pgTable("withdrawals", {
   id: text("id").primaryKey(),
@@ -50,7 +53,9 @@ export const withdrawalsTable = pgTable("withdrawals", {
   note: text("note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   paidAt: timestamp("paid_at"),
-});
+}, (table) => ([
+  index("withdrawals_user_id_created_at_idx").on(table.userId, table.createdAt),
+]));
 
 export const settingsTable = pgTable("admin_settings", {
   key: text("key").primaryKey(),
@@ -74,4 +79,6 @@ export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   p256dh: text("p256dh").notNull(),
   auth: text("auth").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ([
+  index("push_subscriptions_user_id_idx").on(table.userId),
+]));
