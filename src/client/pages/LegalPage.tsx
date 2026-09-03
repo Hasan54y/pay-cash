@@ -17,25 +17,36 @@ function Layout({ title, children }: { title: string; children: React.ReactNode 
   );
 }
 
-export function TermsPage() {
-  const [params] = useSearchParams();
-  const isCustomer = params.get("audience") === "customer";
-
+function CustomerTerms() {
   return (
     <Layout title="Terms of Service">
-      <p>
-        Pay Cash ("we," "us") lets sub-admins accept payments from senders via Cash App's Bitcoin Lightning payment option
-        {isCustomer ? "." : ", and forwards the resulting value to sub-admins as a local-currency balance, withdrawable via bKash, Nagad, or bank transfer."}
-      </p>
+      <p>By continuing with a payment on this page, you agree to the following.</p>
+      <p><strong>Secure transactions.</strong> All payments are processed securely through Cash App's own Bitcoin Lightning payment infrastructure.</p>
+      <p><strong>Not affiliated with Cash App.</strong> This page is an independent payment page and is not operated, endorsed, or affiliated with Block, Inc. or Cash App.</p>
+      <p><strong>Payments are final.</strong> Once a payment is sent and confirmed, it cannot be reversed. We are not responsible for the payment once it is completed, including any dispute between sender and recipient.</p>
+      <p><strong>Your responsibility.</strong> Double-check the amount and recipient before paying. Only pay someone you intend to pay.</p>
+    </Layout>
+  );
+}
+
+function SubAdminTerms() {
+  return (
+    <Layout title="Terms of Service">
+      <p>Pay Cash ("we," "us") lets sub-admins accept payments from senders via Cash App's Bitcoin Lightning payment option, and forwards the resulting value to sub-admins as a local-currency balance, withdrawable via bKash, Nagad, or bank transfer.</p>
       <p><strong>Not affiliated with Cash App.</strong> Pay Cash is an independent service and is not operated, endorsed, or affiliated with Block, Inc. or Cash App. We use Cash App's public Lightning payment feature as a payment rail, nothing more.</p>
-      {!isCustomer && <p><strong>Fees.</strong> A service fee, if applicable to your account, is shown to you in your sub-admin settings before you send or receive payments through your page.</p>}
-      {!isCustomer && <p><strong>Sub-admin responsibilities.</strong> You're responsible for the accuracy of the payout details you submit (bKash/Nagad/bank info) and for any payment page you operate. Don't use Pay Cash for unlawful purposes, fraud, or to collect payments under false pretenses.</p>}
+      <p><strong>Fees.</strong> A service fee, if applicable to your account, is shown to you in your sub-admin settings before you send or receive payments through your page.</p>
+      <p><strong>Sub-admin responsibilities.</strong> You're responsible for the accuracy of the payout details you submit (bKash/Nagad/bank info) and for any payment page you operate. Don't use Pay Cash for unlawful purposes, fraud, or to collect payments under false pretenses.</p>
       <p><strong>Payment finality.</strong> Payments are confirmed once verified against our payment processor's records. Expired or unpaid invoices are not credited.</p>
       <p><strong>No guarantees.</strong> The service is provided "as is." We don't guarantee uninterrupted availability, and currency conversion rates may change day to day.</p>
       <p><strong>Termination.</strong> We may suspend or close an account that violates these terms or applicable law.</p>
-      {!isCustomer && <p><strong>Contact.</strong> Questions about these terms: hasanmahmud6634@gmail.com.</p>}
+      <p><strong>Contact.</strong> Questions about these terms: hasanmahmud6634@gmail.com.</p>
     </Layout>
   );
+}
+
+export function TermsPage() {
+  const [params] = useSearchParams();
+  return params.get("audience") === "customer" ? <CustomerTerms /> : <SubAdminTerms />;
 }
 
 export function PrivacyPage() {
