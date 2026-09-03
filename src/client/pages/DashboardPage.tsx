@@ -424,8 +424,6 @@ function WithdrawModal({ user, token, onClose, onSuccess }: { user: UserInfo; to
 
 function AccountsCard({ token, user }: { token: string; user: UserInfo }) {
   const [accounts, setAccounts] = useState<SubAccount[]>([]);
-  const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ displayName: "", username: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -444,24 +442,14 @@ function AccountsCard({ token, user }: { token: string; user: UserInfo }) {
     else { setError(d.error ?? "Couldn't switch"); setBusy(false); }
   }
 
-  async function create(e: React.FormEvent) {
-    e.preventDefault(); setError(""); setBusy(true);
-    const r = await fetch("/api/dashboard/sub-accounts", {
-      method: "POST", headers: { "Content-Type": "application/json", "x-user-token": token },
-      body: JSON.stringify(form),
-    });
-    const d = await r.json() as { error?: string };
-    setBusy(false);
-    if (!r.ok) { setError(d.error ?? "Failed"); return; }
-    setForm({ displayName: "", username: "" }); setAdding(false); fetchAccounts();
-  }
-
   async function remove(id: string) {
     if (!confirm("Remove this account? Its own transaction history stays, but the page will stop working.")) return;
     setBusy(true);
     await fetch(`/api/dashboard/sub-accounts/${id}`, { method: "DELETE", headers: { "x-user-token": token } });
     setBusy(false); fetchAccounts();
   }
+
+  if (accounts.length <= 1) return null;
 
   return (
     <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -481,21 +469,7 @@ function AccountsCard({ token, user }: { token: string; user: UserInfo }) {
           </div>
         </div>
       ))}
-
       {error && <p className="error-text">{error}</p>}
-
-      {!user.isSubAccount && (adding ? (
-        <form onSubmit={create} style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-          <input className="input" placeholder="Display name" required value={form.displayName} onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))} />
-          <input className="input" placeholder="Username" required value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} />
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" onClick={() => setAdding(false)} className="btn btn-muted" style={{ flex: 1 }}>Cancel</button>
-            <button type="submit" disabled={busy} className="btn btn-primary" style={{ flex: 1, color: "#fff" }}>{busy ? "…" : "Create"}</button>
-          </div>
-        </form>
-      ) : (
-        <button onClick={() => setAdding(true)} className="btn btn-muted btn-sm" style={{ alignSelf: "flex-start" }}>+ Add Account</button>
-      ))}
     </div>
   );
 }

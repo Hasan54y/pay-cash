@@ -491,30 +491,6 @@ app.get("/api/dashboard/sub-accounts", async (req, res) => {
   res.json(rows);
 });
 
-app.post("/api/dashboard/sub-accounts", async (req, res) => {
-  const token = req.headers["x-user-token"] as string;
-  const user = await getUserFromToken(token);
-  if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  if (user.parentUserId) { res.status(400).json({ error: "Sub-accounts can't create their own sub-accounts" }); return; }
-
-  const { displayName, username } = req.body as { displayName?: string; username?: string };
-  if (!displayName?.trim() || !username?.trim()) { res.status(400).json({ error: "Display name and username required" }); return; }
-  const slug = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
-  if (!slug) { res.status(400).json({ error: "Invalid username" }); return; }
-  const existing = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, slug));
-  if (existing.length) { res.status(400).json({ error: "Username taken" }); return; }
-
-  const id = nanoid();
-  await db.insert(usersTable).values({
-    id, fullName: displayName.trim(), email: `${id}@subaccount.local`,
-    displayName: displayName.trim(), username: slug,
-    passwordHash: await bcrypt.hash(nanoid(32), 10),
-    role: "subadmin", status: "active", bdtRate: user.bdtRate, balance: "0",
-    parentUserId: user.id,
-  });
-  res.status(201).json({ success: true, id });
-});
-
 app.delete("/api/dashboard/sub-accounts/:id", async (req, res) => {
   const token = req.headers["x-user-token"] as string;
   const user = await getUserFromToken(token);
