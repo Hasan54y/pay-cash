@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
@@ -8,6 +9,11 @@ import { eq, desc, sql, and, or, lt, gt, ne } from "drizzle-orm";
 
 const app = express();
 app.use(cors());
+// Skip compressing the SSE payment-status stream — it needs to flush each chunk
+// immediately, not buffer them, or "payment successful" would show up late.
+app.use(compression({
+  filter: (req, res) => res.getHeader("Content-Type") !== "text/event-stream" && compression.filter(req, res),
+}));
 app.use(express.json());
 
 const SPEED_API = "https://api.tryspeed.com";
@@ -673,7 +679,16 @@ app.post("/api/admin/sync", async (req, res) => {
 // ── Frontend ──
 if (process.env.NODE_ENV === "production") {
   const publicDir = path.join(process.cwd(), "dist/public");
-  app.use(express.static(publicDir));
+  // Vite content-hashes JS/CSS filenames, so it's safe to cache them long-term — a new
+  // deploy always produces new filenames. index.html itself must stay uncached, since
+  // it's what points the browser at the current hashed filenames.
+  app.use(express.static(publicDir, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith("index.html")) res.setHeader("Cache-Control", "no-cache");
+    },
+  }));
   app.get("/{*path}", async (req, res) => {
     try {
       const fs = await import("fs");
@@ -708,6 +723,7 @@ if (process.env.NODE_ENV === "production") {
       }
 
       res.setHeader("Content-Type", "text/html");
+      res.setHeader("Cache-Control", "no-cache");
       res.send(html);
     } catch {
       res.sendFile(path.join(process.cwd(), "dist/public", "index.html"));
