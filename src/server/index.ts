@@ -696,8 +696,13 @@ app.post("/api/admin/speed-withdraw", async (req, res) => {
     headers: { "Content-Type": "application/json", Authorization: speedAuth(), "speed-version": "2022-04-15" },
     body: JSON.stringify({ amount: amountSats, currency: "SATS", withdraw_method: withdrawMethod, withdraw_request: destination.trim() }),
   });
-  const sent = await r.json() as { id?: string; status?: string; fees?: number; errors?: unknown };
-  if (!r.ok || !sent.id) { res.status(500).json({ error: "Send failed", details: sent }); return; }
+  const sent = await r.json() as { id?: string; status?: string; fees?: number; errors?: { message?: string; type?: string }[]; message?: string };
+  if (!r.ok || !sent.id) {
+    const reason = sent.errors?.[0]?.message ?? sent.message ?? `Speed returned ${r.status}`;
+    console.error("speed-withdraw failed:", JSON.stringify(sent));
+    res.status(500).json({ error: reason, details: sent });
+    return;
+  }
 
   await db.insert(speedWithdrawalsTable).values({
     id: sent.id, amountUsd: String(amountUsd), destination: destination.trim(), method: withdrawMethod,
