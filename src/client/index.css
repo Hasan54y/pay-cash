@@ -462,7 +462,7 @@ a { color: inherit; }
 }
 
 /* ---------- Payment page ---------- */
-.pay-page { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.pay-page { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
 .pay-card {
   background: var(--glass-bg-strong);
   backdrop-filter: blur(28px) saturate(180%);
