@@ -54,6 +54,15 @@ export const settingsTable = pgTable("admin_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const contactMessagesTable = pgTable("contact_messages", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status", { enum: ["unread", "read"] }).notNull().default("unread"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => usersTable.id),

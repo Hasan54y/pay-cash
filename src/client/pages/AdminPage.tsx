@@ -13,20 +13,23 @@ function IcoCard({ on }: { on: boolean }) { return <svg width="20" height="20" v
 function IcoUsers({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>; }
 function IcoMoney({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>; }
 function IcoSettings({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>; }
+function IcoMail({ on }: { on: boolean }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on?"#00C853":"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>; }
 function IcoLogout() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>; }
 
-type Tab = "home" | "payments" | "users" | "withdrawals" | "settings";
+type Tab = "home" | "payments" | "users" | "withdrawals" | "messages" | "settings";
 
 interface Payment { id: string; shortId: string; amountUsd: number; amountSats: number; status: string; createdAt: string; paidAt: string | null; checkedBy: string | null; lightningInvoice: string; subadminName: string | null; subadminUsername: string | null; }
 interface AdminData { payments: Payment[]; totalRevenue: number; }
 interface User { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; feePercentage?: number; status: string; createdAt: string; profilePic?: string | null; }
 interface Withdrawal { id: string; userId: string; amountUsd: number; method: string; accountNumber: string | null; accountName: string | null; bankName: string | null; routingNumber: string | null; district: string | null; upazila: string | null; status: string; createdAt: string; paidAt: string | null; userName: string; userUsername: string; note: string | null; }
+interface ContactMessage { id: string; email: string; subject: string; message: string; status: string; createdAt: string; }
 
 const NAV_ITEMS: { key: Tab; label: string; icon: (on: boolean) => React.ReactNode }[] = [
   { key: "home", label: "Home", icon: (on) => <IcoHome on={on} /> },
   { key: "payments", label: "Payments", icon: (on) => <IcoCard on={on} /> },
   { key: "users", label: "Users", icon: (on) => <IcoUsers on={on} /> },
   { key: "withdrawals", label: "Withdraw", icon: (on) => <IcoMoney on={on} /> },
+  { key: "messages", label: "Messages", icon: (on) => <IcoMail on={on} /> },
   { key: "settings", label: "Settings", icon: (on) => <IcoSettings on={on} /> },
 ];
 
@@ -113,6 +116,7 @@ export default function AdminPage() {
           {tab === "payments" && <PaymentsTab pw={pw} />}
           {tab === "users" && <UsersTab pw={pw} />}
           {tab === "withdrawals" && <WithdrawalsTab pw={pw} />}
+          {tab === "messages" && <MessagesTab pw={pw} />}
           {tab === "settings" && <SettingsTab pw={pw} onLogout={() => { localStorage.removeItem("admin_pw"); setAuthed(false); setPw(""); }} />}
         </div>
       </div>
@@ -595,6 +599,61 @@ function WithdrawalsTab({ pw }: { pw: string }) {
                     </div>
                   )}
                   {w.note && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>Note: {w.note}</p>}
+                </div>
+              )}
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function MessagesTab({ pw }: { pw: string }) {
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => { fetchMessages(); }, []);
+  async function fetchMessages() {
+    const r = await fetch("/api/admin/contact-messages", { headers: { "x-admin-password": pw } });
+    if (r.ok) setMessages(await r.json());
+  }
+
+  async function open(id: string, status: string) {
+    setExpanded(expanded === id ? null : id);
+    if (status === "unread") {
+      await fetch(`/api/admin/contact-messages/${id}`, { method: "PUT", headers: { "x-admin-password": pw } });
+      setMessages(ms => ms.map(m => m.id === id ? { ...m, status: "read" } : m));
+    }
+  }
+
+  const unreadCount = messages.filter(m => m.status === "unread").length;
+
+  return (
+    <div>
+      <div className="mobile-topbar">
+        <h1>
+          Messages {unreadCount > 0 && <span style={{ background: "var(--danger)", color: "#fff", borderRadius: "50%", fontSize: 12, padding: "2px 7px", marginLeft: 6 }}>{unreadCount}</span>}
+        </h1>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 24 }}>
+        {messages.length === 0 ? <div className="card" style={{ padding: 32, textAlign: "center" }}><p style={{ color: "var(--text-muted)" }}>No messages</p></div>
+          : messages.map(m => (
+            <div key={m.id} className="card" style={{ overflow: "hidden" }}>
+              <div onClick={() => open(m.id, m.status)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", cursor: "pointer" }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 15, fontWeight: m.status === "unread" ? 800 : 700, marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.subject}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{m.email} · {new Date(m.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  {m.status === "unread" && <span className="badge" style={{ color: "var(--danger)", background: "var(--danger-soft)" }}>New</span>}
+                  <span style={{ color: "var(--chevron)" }}>{expanded === m.id ? "▾" : "›"}</span>
+                </div>
+              </div>
+              {expanded === m.id && (
+                <div style={{ borderTop: "1px solid var(--surface-alt)", padding: "14px 16px" }}>
+                  <p style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{m.message}</p>
                 </div>
               )}
             </div>

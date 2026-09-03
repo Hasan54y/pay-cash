@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ThemeToggle from "./../theme";
 
@@ -49,7 +50,50 @@ export function TermsPage() {
   return params.get("audience") === "customer" ? <CustomerTerms /> : <SubAdminTerms />;
 }
 
-export function PrivacyPage() {
+function ContactForm() {
+  const [form, setForm] = useState({ email: "", subject: "", message: "" });
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const r = await fetch("/api/contact", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
+      });
+      if (!r.ok) throw new Error();
+      setStatus("sent");
+      setForm({ email: "", subject: "", message: "" });
+    } catch { setStatus("error"); }
+  }
+
+  if (status === "sent") return <p style={{ color: "var(--primary-dark)", fontWeight: 600 }}>✓ Message sent. We'll get back to you at the email you provided.</p>;
+
+  return (
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <input className="input" type="email" placeholder="Your email" required value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+      <input className="input" type="text" placeholder="Subject" required value={form.subject} onChange={e => setForm(p => ({ ...p, subject: e.target.value }))} />
+      <textarea className="input" placeholder="Describe your question or issue" required rows={4} value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} style={{ resize: "vertical", fontFamily: "inherit" }} />
+      {status === "error" && <p className="error-text">Couldn't send that — try again.</p>}
+      <button type="submit" className="btn btn-primary" disabled={status === "sending"}>{status === "sending" ? "Sending…" : "Send Message"}</button>
+    </form>
+  );
+}
+
+function CustomerPrivacy() {
+  return (
+    <Layout title="Privacy Policy">
+      <p>This page explains what information is collected when you use this payment page.</p>
+      <p><strong>What we collect.</strong> Only what's needed to process your payment: the amount and a record of the transaction.</p>
+      <p><strong>What we don't collect.</strong> We never see or store your Cash App login credentials — payments are completed entirely on Cash App's own site or app.</p>
+      <p><strong>Sharing.</strong> We don't sell your data. Information is shared only with the payment processor needed to complete a transaction, or when required by law.</p>
+      <p><strong>Contact us.</strong></p>
+      <ContactForm />
+    </Layout>
+  );
+}
+
+function SubAdminPrivacy() {
   return (
     <Layout title="Privacy Policy">
       <p>This page explains what information Pay Cash collects and how it's used.</p>
@@ -62,4 +106,9 @@ export function PrivacyPage() {
       <p><strong>Contact.</strong> Privacy questions: hasanmahmud6634@gmail.com.</p>
     </Layout>
   );
+}
+
+export function PrivacyPage() {
+  const [params] = useSearchParams();
+  return params.get("audience") === "customer" ? <CustomerPrivacy /> : <SubAdminPrivacy />;
 }

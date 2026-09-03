@@ -3,7 +3,7 @@ import cors from "cors";
 import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
-import { db, usersTable, paymentsTable, withdrawalsTable, settingsTable, pushSubscriptionsTable } from "./db/index.js";
+import { db, usersTable, paymentsTable, withdrawalsTable, settingsTable, pushSubscriptionsTable, contactMessagesTable } from "./db/index.js";
 import { eq, desc, sql, and, lt, ne } from "drizzle-orm";
 
 const app = express();
@@ -337,6 +337,19 @@ app.post("/api/webhook/speed", async (req, res) => {
   res.sendStatus(200);
 });
 
+// ── Contact form (public payment-page privacy contact) ──
+app.post("/api/contact", async (req, res) => {
+  const { email, subject, message } = req.body as { email?: string; subject?: string; message?: string };
+  if (!email?.trim() || !subject?.trim() || !message?.trim()) {
+    res.status(400).json({ error: "Email, subject, and message are required" }); return;
+  }
+  await db.insert(contactMessagesTable).values({
+    id: nanoid(), email: email.trim(), subject: subject.trim(), message: message.trim(),
+  });
+  await sendPushNotification(null, "New contact message", `${subject.trim()} — ${email.trim()}`);
+  res.status(201).json({ success: true });
+});
+
 // ── Sub-admin API ──
 app.get("/api/dashboard/me", async (req, res) => {
   const token = req.headers["x-user-token"] as string;
@@ -562,6 +575,20 @@ app.put("/api/admin/withdrawals/:id", async (req, res) => {
     await sendPushNotification(withdrawal.userId, "Withdrawal Rejected", note ?? "Your withdrawal request was rejected");
   }
 
+  res.json({ success: true });
+});
+
+app.get("/api/admin/contact-messages", async (req, res) => {
+  const pw = adminAuth(req);
+  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const rows = await db.select().from(contactMessagesTable).orderBy(desc(contactMessagesTable.createdAt));
+  res.json(rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })));
+});
+
+app.put("/api/admin/contact-messages/:id", async (req, res) => {
+  const pw = adminAuth(req);
+  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  await db.update(contactMessagesTable).set({ status: "read" }).where(eq(contactMessagesTable.id, req.params.id));
   res.json({ success: true });
 });
 

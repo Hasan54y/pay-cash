@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 
-export function LegalFooter({ termsAudience }: { termsAudience?: "customer" }) {
-  const termsHref = termsAudience === "customer" ? "/terms?audience=customer" : "/terms";
+export function LegalFooter({ customer }: { customer?: boolean }) {
+  const suffix = customer ? "?audience=customer" : "";
   return (
     <p style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "center", marginTop: 14 }}>
-      <Link to={termsHref} style={{ color: "inherit" }}>Terms of Service</Link>
+      <Link to={`/terms${suffix}`} style={{ color: "inherit" }}>Terms of Service</Link>
       {" · "}
-      <Link to="/privacy" style={{ color: "inherit" }}>Privacy Policy</Link>
+      <Link to={`/privacy${suffix}`} style={{ color: "inherit" }}>Privacy Policy</Link>
     </p>
   );
 }
