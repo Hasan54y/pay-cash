@@ -72,14 +72,16 @@ export const contactMessagesTable = pgTable("contact_messages", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Admin-initiated payouts out of the Speed wallet balance, via Speed's withdrawal-link
-// API — the admin (or whoever holds the link) redeems it with their own Lightning
-// wallet. This table is just our own audit log of what was generated and its status.
+// Admin-initiated payouts out of the Speed wallet balance via Speed's Instant Send API
+// — a direct push to a Bitcoin address / LN invoice / LN address, no redemption step.
+// This table is just our own audit log of what was sent and its status.
 export const speedWithdrawalsTable = pgTable("speed_withdrawals", {
   id: text("id").primaryKey(),
   amountUsd: numeric("amount_usd", { precision: 10, scale: 2 }).notNull(),
-  url: text("url").notNull(),
-  status: text("status", { enum: ["active", "paid", "deactivated"] }).notNull().default("active"),
+  destination: text("destination").notNull(),
+  method: text("method", { enum: ["onchain", "lightning"] }).notNull(),
+  feesSats: numeric("fees_sats", { precision: 20, scale: 0 }),
+  status: text("status", { enum: ["paid", "failed", "pending"] }).notNull().default("pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

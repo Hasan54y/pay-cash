@@ -662,60 +662,62 @@ app.get("/api/admin/speed-balance", async (req, res) => {
     }
     let balanceUsd = 0;
     if (balanceSats > 0) {
-      try {
-        const pr = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-        const pd = await pr.json() as { bitcoin?: { usd?: number } };
-        balanceUsd = Math.round((balanceSats / 100000000) * (pd.bitcoin?.usd ?? 100000) * 100) / 100;
-      } catch { /**/ }
+      balanceUsd = Math.round((balanceSats / 100000000) * (await getBtcUsdPrice()) * 100) / 100;
     }
     res.json({ balanceUsd, balanceSats });
   } catch { res.status(500).json({ error: "Failed", balanceUsd: 0 }); }
 });
 
-// Pays out of the Speed wallet balance via a withdrawal link, which whoever holds it
-// redeems with their own Lightning-compatible wallet (Speed has no bank-transfer API).
+async function getBtcUsdPrice(): Promise<number> {
+  try {
+    const pr = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+    const pd = await pr.json() as { bitcoin?: { usd?: number } };
+    return pd.bitcoin?.usd ?? 100000;
+  } catch { return 100000; }
+}
+
+// Pushes funds directly out of the Speed wallet to a destination the admin specifies
+// (a Bitcoin on-chain address, by default their saved Binance deposit address) via
+// Speed's Instant Send API. This is a direct push, unlike withdrawal links which
+// require the recipient to redeem an LNURL-withdraw with a compatible wallet.
 app.post("/api/admin/speed-withdraw", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const { amountUsd } = req.body as { amountUsd?: number };
+  const { amountUsd, destination, method } = req.body as { amountUsd?: number; destination?: string; method?: string };
   if (!amountUsd || amountUsd <= 0) { res.status(400).json({ error: "Enter a valid amount" }); return; }
+  if (!destination?.trim()) { res.status(400).json({ error: "Enter a destination address" }); return; }
+  const withdrawMethod = method === "lightning" ? "lightning" : "onchain";
 
-  const r = await fetch(`${SPEED_API}/withdrawal-links`, {
+  const btcPrice = await getBtcUsdPrice();
+  const amountSats = Math.round((amountUsd / btcPrice) * 100000000);
+
+  const r = await fetch(`${SPEED_API}/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: speedAuth(), "speed-version": "2022-04-15" },
-    body: JSON.stringify({ currency: "USD", amount: amountUsd }),
+    body: JSON.stringify({ amount: amountSats, currency: "SATS", withdraw_method: withdrawMethod, withdraw_request: destination.trim() }),
   });
-  const link = await r.json() as { id?: string; url?: string; status?: string; errors?: unknown };
-  if (!r.ok || !link.id || !link.url) { res.status(500).json({ error: "Failed to create withdrawal link", details: link }); return; }
+  const sent = await r.json() as { id?: string; status?: string; fees?: number; errors?: unknown };
+  if (!r.ok || !sent.id) { res.status(500).json({ error: "Send failed", details: sent }); return; }
 
   await db.insert(speedWithdrawalsTable).values({
-    id: link.id, amountUsd: String(amountUsd), url: link.url, status: (link.status as "active" | "paid" | "deactivated") ?? "active",
+    id: sent.id, amountUsd: String(amountUsd), destination: destination.trim(), method: withdrawMethod,
+    feesSats: sent.fees != null ? String(sent.fees) : null, status: (sent.status as "paid" | "failed" | "pending") ?? "pending",
   });
-  res.status(201).json({ id: link.id, url: link.url, amountUsd });
+  await setSetting("speed_payout_address", destination.trim());
+  res.status(201).json({ id: sent.id, status: sent.status, amountUsd, feesSats: sent.fees });
 });
 
 app.get("/api/admin/speed-withdrawals", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-
   const rows = await db.select().from(speedWithdrawalsTable).orderBy(desc(speedWithdrawalsTable.createdAt)).limit(50);
-  // Refresh status for anything not yet resolved as paid, so the log reflects reality
-  // without the admin having to check Speed's dashboard separately.
-  for (const row of rows) {
-    if (row.status === "paid") continue;
-    try {
-      const r = await fetch(`${SPEED_API}/withdrawal-links/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
-      if (!r.ok) continue;
-      const link = await r.json() as { status?: string };
-      const newStatus = link.status as "active" | "paid" | "deactivated" | undefined;
-      if (newStatus && newStatus !== row.status) {
-        await db.update(speedWithdrawalsTable).set({ status: newStatus }).where(eq(speedWithdrawalsTable.id, row.id));
-        row.status = newStatus;
-      }
-    } catch { /* leave as last known status */ }
-  }
+  res.json(rows.map((r) => ({ ...r, amountUsd: parseFloat(String(r.amountUsd)), feesSats: r.feesSats != null ? parseFloat(String(r.feesSats)) : null, createdAt: r.createdAt.toISOString() })));
+});
 
-  res.json(rows.map((r) => ({ ...r, amountUsd: parseFloat(String(r.amountUsd)), createdAt: r.createdAt.toISOString() })));
+app.get("/api/admin/speed-payout-address", async (req, res) => {
+  const pw = adminAuth(req);
+  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  res.json({ address: (await getSetting("speed_payout_address")) ?? "" });
 });
 
 app.post("/api/admin/sync", async (req, res) => {

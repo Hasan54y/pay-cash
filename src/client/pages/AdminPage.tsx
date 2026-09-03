@@ -529,64 +529,74 @@ function UsersTab({ pw }: { pw: string }) {
   );
 }
 
-interface SpeedWithdrawal { id: string; amountUsd: number; url: string; status: string; createdAt: string; }
+interface SpeedWithdrawal { id: string; amountUsd: number; destination: string; method: string; feesSats: number | null; status: string; createdAt: string; }
 
 function SpeedWithdrawCard({ pw }: { pw: string }) {
   const [history, setHistory] = useState<SpeedWithdrawal[]>([]);
   const [amount, setAmount] = useState("");
-  const [generating, setGenerating] = useState(false);
+  const [destination, setDestination] = useState("");
+  const [method, setMethod] = useState<"onchain" | "lightning">("onchain");
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [fresh, setFresh] = useState<SpeedWithdrawal | null>(null);
+  const [sent, setSent] = useState<{ amountUsd: number; feesSats: number | null } | null>(null);
 
-  useEffect(() => { fetchHistory(); }, []);
+  useEffect(() => {
+    fetchHistory();
+    fetch("/api/admin/speed-payout-address", { headers: { "x-admin-password": pw } })
+      .then(r => r.json()).then((d: { address?: string }) => { if (d.address) setDestination(d.address); });
+  }, []);
   async function fetchHistory() {
     const r = await fetch("/api/admin/speed-withdrawals", { headers: { "x-admin-password": pw } });
     if (r.ok) setHistory(await r.json());
   }
 
-  async function generate(e: React.FormEvent) {
-    e.preventDefault(); setError(""); setGenerating(true);
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    if (!confirm(`Send $${amount} to ${destination} via ${method}? This moves real funds immediately.`)) return;
+    setError(""); setSending(true); setSent(null);
     const r = await fetch("/api/admin/speed-withdraw", {
       method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pw },
-      body: JSON.stringify({ amountUsd: parseFloat(amount) }),
+      body: JSON.stringify({ amountUsd: parseFloat(amount), destination, method }),
     });
-    const d = await r.json() as { id?: string; url?: string; amountUsd?: number; error?: string };
-    setGenerating(false);
-    if (!r.ok || !d.url) { setError(d.error ?? "Failed"); return; }
-    setFresh({ id: d.id!, url: d.url, amountUsd: d.amountUsd!, status: "active", createdAt: new Date().toISOString() });
+    const d = await r.json() as { amountUsd?: number; feesSats?: number; error?: string };
+    setSending(false);
+    if (!r.ok) { setError(d.error ?? "Failed"); return; }
+    setSent({ amountUsd: d.amountUsd!, feesSats: d.feesSats ?? null });
     setAmount("");
     fetchHistory();
   }
 
-  const statusColor: Record<string, string> = { paid: "var(--primary-dark)", active: "var(--warning-soft-text)", deactivated: "var(--text-muted)" };
-  const statusBg: Record<string, string> = { paid: "var(--primary-soft)", active: "var(--warning-soft)", deactivated: "var(--neutral-soft)" };
+  const statusColor: Record<string, string> = { paid: "var(--primary-dark)", pending: "var(--warning-soft-text)", failed: "var(--danger)" };
+  const statusBg: Record<string, string> = { paid: "var(--primary-soft)", pending: "var(--warning-soft)", failed: "var(--danger-soft)" };
 
   return (
     <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
       <div>
         <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Withdraw from Speed</p>
-        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Generates a link paid out via Lightning — open it and scan with your own Lightning-compatible wallet (e.g. Cash App) to actually receive the funds. Speed has no bank-transfer option.</p>
+        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Sends directly to a Bitcoin address or Lightning destination — e.g. your Binance BTC deposit address (on-chain). No redemption step, single network fee.</p>
       </div>
 
-      <form onSubmit={generate} style={{ display: "flex", gap: 8 }}>
-        <input className="input" type="number" step="0.01" min="1" placeholder="Amount (USD)" value={amount} onChange={e => setAmount(e.target.value)} required style={{ flex: 1 }} />
-        <button type="submit" disabled={generating} className={`btn ${generating ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
-          {generating ? "…" : "Generate"}
+      <form onSubmit={send} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="field">
+          <label className="field-label">DESTINATION {method === "onchain" ? "(Bitcoin address)" : "(LN invoice / LN address)"}</label>
+          <input className="input" value={destination} onChange={e => setDestination(e.target.value)} placeholder="e.g. your Binance BTC deposit address" required />
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <select className="input" value={method} onChange={e => setMethod(e.target.value as "onchain" | "lightning")} style={{ flex: 1 }}>
+            <option value="onchain">On-chain</option>
+            <option value="lightning">Lightning</option>
+          </select>
+          <input className="input" type="number" step="0.01" min="1" placeholder="Amount (USD)" value={amount} onChange={e => setAmount(e.target.value)} required style={{ flex: 1 }} />
+        </div>
+        <button type="submit" disabled={sending} className={`btn ${sending ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
+          {sending ? "Sending…" : "Send"}
         </button>
       </form>
       {error && <p className="error-text">{error}</p>}
 
-      {fresh && (
-        <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-          <QRCanvas data={fresh.url} size={110} />
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>${fresh.amountUsd.toFixed(2)} ready</p>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", wordBreak: "break-all", marginBottom: 8 }}>{fresh.url}</p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => navigator.clipboard.writeText(fresh.url)} className="btn btn-outline btn-sm">Copy Link</button>
-              <a href={fresh.url} target="_blank" rel="noreferrer" className="btn btn-dark btn-sm">Open</a>
-            </div>
-          </div>
+      {sent && (
+        <div style={{ background: "var(--primary-soft)", borderRadius: 12, padding: 14 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--primary-dark)" }}>✓ Sent ${sent.amountUsd.toFixed(2)}{sent.feesSats != null ? ` (fee: ${sent.feesSats} sats)` : ""}</p>
         </div>
       )}
 
@@ -595,16 +605,13 @@ function SpeedWithdrawCard({ pw }: { pw: string }) {
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8 }}>History</p>
           {history.map(h => (
             <div key={h.id} className="list-row">
-              <div>
-                <p className="row-title">${h.amountUsd.toFixed(2)}</p>
-                <p className="row-sub">{new Date(h.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+              <div style={{ minWidth: 0 }}>
+                <p className="row-title">${h.amountUsd.toFixed(2)} <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>· {h.method}</span></p>
+                <p className="row-sub" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.destination}</p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span className="badge" style={{ color: statusColor[h.status] ?? "var(--text-muted)", background: statusBg[h.status] ?? "var(--surface-alt)" }}>
-                  {h.status.charAt(0).toUpperCase() + h.status.slice(1)}
-                </span>
-                {h.status === "active" && <a href={h.url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Open</a>}
-              </div>
+              <span className="badge" style={{ color: statusColor[h.status] ?? "var(--text-muted)", background: statusBg[h.status] ?? "var(--surface-alt)", flexShrink: 0 }}>
+                {h.status.charAt(0).toUpperCase() + h.status.slice(1)}
+              </span>
             </div>
           ))}
         </div>
