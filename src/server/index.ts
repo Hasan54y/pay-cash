@@ -625,7 +625,7 @@ if (process.env.NODE_ENV === "production") {
         ogImageUrl = `https://pay-cash.shop/og-image.svg?u=${slug}`;
       }
 
-      const title = `Pay ${displayName} via Cash App`;
+      const title = `Enter amount and Pay ${displayName}`;
       html = html
         .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
         .replace(/(<meta property="og:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
