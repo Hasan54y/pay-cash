@@ -4,7 +4,7 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { db, usersTable, paymentsTable, withdrawalsTable, settingsTable, pushSubscriptionsTable, contactMessagesTable } from "./db/index.js";
-import { eq, desc, sql, and, or, lt, ne, isNull } from "drizzle-orm";
+import { eq, desc, sql, and, lt, ne } from "drizzle-orm";
 
 const app = express();
 app.use(cors());
@@ -55,14 +55,6 @@ function adminAuth(req: express.Request): string | undefined {
 async function getUserFromToken(token: string): Promise<typeof usersTable.$inferSelect | null> {
   const [user] = await db.select().from(usersTable).where(and(eq(usersTable.id, token), eq(usersTable.status, "active")));
   return user ?? null;
-}
-
-// Sub-accounts share their parent's balance/withdrawal history; this resolves whichever
-// account the pooled balance actually lives on (itself, unless it's a sub-account).
-async function getBalanceOwner(user: typeof usersTable.$inferSelect): Promise<typeof usersTable.$inferSelect> {
-  if (!user.parentUserId) return user;
-  const [root] = await db.select().from(usersTable).where(eq(usersTable.id, user.parentUserId));
-  return root ?? user;
 }
 
 // Send push notification
@@ -200,7 +192,6 @@ app.post("/api/auth/login", async (req, res) => {
   const found = user ?? userByUsername;
 
   if (!found) { res.status(401).json({ error: "Invalid credentials" }); return; }
-  if (found.parentUserId) { res.status(403).json({ error: "This account can only be accessed by switching from its primary account" }); return; }
   if (found.status === "pending") { res.status(403).json({ error: "Account pending approval" }); return; }
   if (found.status === "rejected") { res.status(403).json({ error: "Account rejected" }); return; }
   if (found.status === "suspended") { res.status(403).json({ error: "Account suspended" }); return; }
@@ -253,13 +244,9 @@ app.post("/api/invoices", async (req, res) => {
     const [user] = await db.select().from(usersTable).where(and(eq(usersTable.id, userId), eq(usersTable.status, "active")));
     if (user) {
       displayName = user.displayName;
-      // Override with per-user fee if set. A sub-account has no fee of its own — it
-      // inherits whatever fee applies to the parent it shares a balance with.
-      const feeSource = user.parentUserId
-        ? (await db.select().from(usersTable).where(eq(usersTable.id, user.parentUserId)))[0] ?? user
-        : user;
-      if (feeSource.feePercentage != null && parseFloat(String(feeSource.feePercentage)) > 0) {
-        feePercentage = parseFloat(String(feeSource.feePercentage));
+      // Override with per-user fee if set
+      if (user.feePercentage != null && parseFloat(String(user.feePercentage)) > 0) {
+        feePercentage = parseFloat(String(user.feePercentage));
       }
     }
   }
@@ -325,22 +312,14 @@ app.post("/api/webhook/speed", async (req, res) => {
           const p = result[0];
           const amount = parseFloat(String(p.amountUsd));
 
-          // Credit balance — a sub-account's own row never holds balance; it's pooled
-          // on the primary account (its parent). Admin-owned sub-accounts have no
-          // balance ledger at all, same as the admin's own root page.
+          // Credit sub-admin balance
           if (p.userId) {
-            const [payee] = await db.select().from(usersTable).where(eq(usersTable.id, p.userId));
-            if (payee?.isAdminSubAccount) {
-              const displayName = (await getSetting("display_name")) ?? "";
-              await sendPushNotification(null, `Payment - ${payee.displayName}`, `$${amount.toFixed(2)} received - ${displayName}`);
-            } else if (payee) {
-              const ownerId = payee.parentUserId ?? payee.id;
-              await db.update(usersTable).set({
-                balance: sql`${usersTable.balance}::numeric + ${amount}`
-              }).where(eq(usersTable.id, ownerId));
-              await sendPushNotification(ownerId, "Payment Received!", `$${amount.toFixed(2)} received on ${payee.displayName}'s page`);
-              await sendPushNotification(null, `Payment - ${payee.displayName}`, `$${amount.toFixed(2)} received`);
-            }
+            await db.update(usersTable).set({
+              balance: sql`${usersTable.balance}::numeric + ${amount}`
+            }).where(eq(usersTable.id, p.userId));
+            const [user] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, p.userId));
+            await sendPushNotification(p.userId, "Payment Received!", `$${amount.toFixed(2)} received on your page`);
+            await sendPushNotification(null, `Payment - ${user?.displayName ?? ""}`, `$${amount.toFixed(2)} received`);
           } else {
             const displayName = (await getSetting("display_name")) ?? "";
             await sendPushNotification(null, `Payment Received!`, `$${amount.toFixed(2)} received - ${displayName}`);
@@ -376,14 +355,12 @@ app.get("/api/dashboard/me", async (req, res) => {
   const token = req.headers["x-user-token"] as string;
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const owner = await getBalanceOwner(user);
   res.json({
     id: user.id, fullName: user.fullName, displayName: user.displayName,
     username: user.username, email: user.email, phone: user.phone,
-    balance: parseFloat(String(owner.balance)),
-    bdtRate: parseFloat(String(owner.bdtRate ?? 120)),
+    balance: parseFloat(String(user.balance)),
+    bdtRate: parseFloat(String(user.bdtRate ?? 120)),
     profilePic: user.profilePic,
-    isSubAccount: !!user.parentUserId,
   });
 });
 
@@ -417,20 +394,17 @@ app.post("/api/dashboard/withdraw", async (req, res) => {
   const token = req.headers["x-user-token"] as string;
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const owner = await getBalanceOwner(user);
 
   const { amountUsd, method, accountNumber, accountName, bankName, routingNumber, district, upazila } = req.body as Record<string, string>;
   const amount = parseFloat(amountUsd);
-  const balance = parseFloat(String(owner.balance));
+  const balance = parseFloat(String(user.balance));
 
   if (!amount || amount < 10) { res.status(400).json({ error: "Minimum withdrawal is $10" }); return; }
   if (amount > balance) { res.status(400).json({ error: "Insufficient balance" }); return; }
   if (method === "bank" && amount < 250) { res.status(400).json({ error: "Bank withdrawal requires minimum $250" }); return; }
 
-  // Attributed to the pooled account (owner), not whichever sub-account requested it,
-  // so balance/withdrawal history stays consistent across the whole account family.
   await db.insert(withdrawalsTable).values({
-    id: nanoid(), userId: owner.id, amountUsd: String(amount), method: method as "bkash" | "nagad" | "bank",
+    id: nanoid(), userId: user.id, amountUsd: String(amount), method: method as "bkash" | "nagad" | "bank",
     accountNumber, accountName, bankName, routingNumber, district, upazila, status: "pending",
   });
 
@@ -444,8 +418,7 @@ app.get("/api/dashboard/withdrawals", async (req, res) => {
   const token = req.headers["x-user-token"] as string;
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const owner = await getBalanceOwner(user);
-  const rows = await db.select().from(withdrawalsTable).where(eq(withdrawalsTable.userId, owner.id))
+  const rows = await db.select().from(withdrawalsTable).where(eq(withdrawalsTable.userId, user.id))
     .orderBy(desc(withdrawalsTable.createdAt)).limit(20);
   res.json(rows.map((r) => ({ ...r, amountUsd: parseFloat(String(r.amountUsd)), createdAt: r.createdAt.toISOString() })));
 });
@@ -456,12 +429,8 @@ app.put("/api/dashboard/settings", async (req, res) => {
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
 
   const { displayName, username, newPassword, currentPassword, profilePic } = req.body as Record<string, string>;
-  // Sub-accounts have no known password (they're only reached by switching from the
-  // primary account), so there's nothing to verify or change for them.
-  if (!user.parentUserId) {
-    if (!await bcrypt.compare(currentPassword, user.passwordHash)) {
-      res.status(401).json({ error: "Current password incorrect" }); return;
-    }
+  if (!await bcrypt.compare(currentPassword, user.passwordHash)) {
+    res.status(401).json({ error: "Current password incorrect" }); return;
   }
 
   const updates: Partial<typeof usersTable.$inferInsert> = {};
@@ -477,41 +446,6 @@ app.put("/api/dashboard/settings", async (req, res) => {
   if (profilePic !== undefined) updates.profilePic = profilePic || null;
   if (Object.keys(updates).length) await db.update(usersTable).set(updates).where(eq(usersTable.id, user.id));
   res.json({ success: true });
-});
-
-// A sub-account's page/identity, own transaction history, no password of its own —
-// shares the parent's pooled balance and is only reachable by switching from it.
-app.get("/api/dashboard/sub-accounts", async (req, res) => {
-  const token = req.headers["x-user-token"] as string;
-  const user = await getUserFromToken(token);
-  if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const rootId = user.parentUserId ?? user.id;
-  const rows = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, profilePic: usersTable.profilePic })
-    .from(usersTable).where(or(eq(usersTable.id, rootId), eq(usersTable.parentUserId, rootId)));
-  res.json(rows);
-});
-
-app.delete("/api/dashboard/sub-accounts/:id", async (req, res) => {
-  const token = req.headers["x-user-token"] as string;
-  const user = await getUserFromToken(token);
-  if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  if (user.parentUserId) { res.status(400).json({ error: "Only the primary account can remove sub-accounts" }); return; }
-  await db.delete(usersTable).where(and(eq(usersTable.id, req.params.id), eq(usersTable.parentUserId, user.id)));
-  res.json({ success: true });
-});
-
-app.post("/api/dashboard/switch/:id", async (req, res) => {
-  const token = req.headers["x-user-token"] as string;
-  const user = await getUserFromToken(token);
-  if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const rootId = user.parentUserId ?? user.id;
-
-  const [target] = await db.select().from(usersTable).where(eq(usersTable.id, req.params.id));
-  if (!target || target.status !== "active") { res.status(404).json({ error: "Not found" }); return; }
-  const targetRootId = target.parentUserId ?? target.id;
-  if (targetRootId !== rootId) { res.status(403).json({ error: "Not part of your account family" }); return; }
-
-  res.json({ token: target.id, displayName: target.displayName, username: target.username });
 });
 
 // ── Admin API ──
@@ -585,10 +519,7 @@ app.put("/api/admin/payments/:id/check", async (req, res) => {
 app.get("/api/admin/users", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  // Sub-accounts (either a sub-admin's own, or the admin's) aren't independently
-  // manageable here — they're owned/managed from within their parent's page.
-  const users = await db.select().from(usersTable)
-    .where(and(eq(usersTable.role, "subadmin"), isNull(usersTable.parentUserId), eq(usersTable.isAdminSubAccount, false)))
+  const users = await db.select().from(usersTable).where(eq(usersTable.role, "subadmin"))
     .orderBy(desc(usersTable.createdAt));
   res.json(users.map((u) => ({ ...u, balance: parseFloat(String(u.balance)), bdtRate: parseFloat(String(u.bdtRate ?? 120)) })));
 });
@@ -658,44 +589,6 @@ app.put("/api/admin/contact-messages/:id", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
   await db.update(contactMessagesTable).set({ status: "read" }).where(eq(contactMessagesTable.id, req.params.id));
-  res.json({ success: true });
-});
-
-// Extra named payment pages for the admin's own root identity. No balance ledger —
-// their revenue is just part of the admin's overall revenue, same as the root page.
-app.get("/api/admin/sub-accounts", async (req, res) => {
-  const pw = adminAuth(req);
-  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const rows = await db.select({ id: usersTable.id, displayName: usersTable.displayName, username: usersTable.username, profilePic: usersTable.profilePic, createdAt: usersTable.createdAt })
-    .from(usersTable).where(eq(usersTable.isAdminSubAccount, true)).orderBy(desc(usersTable.createdAt));
-  res.json(rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })));
-});
-
-app.post("/api/admin/sub-accounts", async (req, res) => {
-  const pw = adminAuth(req);
-  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const { displayName, username } = req.body as { displayName?: string; username?: string };
-  if (!displayName?.trim() || !username?.trim()) { res.status(400).json({ error: "Display name and username required" }); return; }
-  const slug = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
-  if (!slug) { res.status(400).json({ error: "Invalid username" }); return; }
-  const existing = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, slug));
-  if (existing.length) { res.status(400).json({ error: "Username taken" }); return; }
-
-  const id = nanoid();
-  await db.insert(usersTable).values({
-    id, fullName: displayName.trim(), email: `${id}@subaccount.local`,
-    displayName: displayName.trim(), username: slug,
-    passwordHash: await bcrypt.hash(nanoid(32), 10),
-    role: "subadmin", status: "active", bdtRate: "120", balance: "0",
-    isAdminSubAccount: true,
-  });
-  res.status(201).json({ success: true, id });
-});
-
-app.delete("/api/admin/sub-accounts/:id", async (req, res) => {
-  const pw = adminAuth(req);
-  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  await db.delete(usersTable).where(and(eq(usersTable.id, req.params.id), eq(usersTable.isAdminSubAccount, true)));
   res.json({ success: true });
 });
 

@@ -10,8 +10,7 @@ import { fileToDataUrl } from "./../imageUpload";
 
 type Tab = "home" | "payments" | "paypage" | "settings";
 
-interface UserInfo { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; profilePic: string | null; isSubAccount: boolean; }
-interface SubAccount { id: string; displayName: string; username: string; profilePic: string | null; }
+interface UserInfo { id: string; fullName: string; displayName: string; username: string; email: string; phone: string; balance: number; bdtRate: number; profilePic: string | null; }
 interface Payment { id: string; shortId: string; amountUsd: number; amountSats: number; status: string; createdAt: string; paidAt: string | null; checkedBy: string | null; lightningInvoice: string; }
 interface Withdrawal { id: string; amountUsd: number; method: string; status: string; createdAt: string; }
 interface DashboardData { payments: Payment[]; totalRevenue: number; }
@@ -422,58 +421,6 @@ function WithdrawModal({ user, token, onClose, onSuccess }: { user: UserInfo; to
   );
 }
 
-function AccountsCard({ token, user }: { token: string; user: UserInfo }) {
-  const [accounts, setAccounts] = useState<SubAccount[]>([]);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => { fetchAccounts(); }, []);
-  async function fetchAccounts() {
-    const r = await fetch("/api/dashboard/sub-accounts", { headers: { "x-user-token": token } });
-    if (r.ok) setAccounts(await r.json());
-  }
-
-  async function switchTo(id: string) {
-    if (id === user.id) return;
-    setBusy(true);
-    const r = await fetch(`/api/dashboard/switch/${id}`, { method: "POST", headers: { "x-user-token": token } });
-    const d = await r.json() as { token?: string; error?: string };
-    if (r.ok && d.token) { localStorage.setItem("user_token", d.token); window.location.reload(); }
-    else { setError(d.error ?? "Couldn't switch"); setBusy(false); }
-  }
-
-  async function remove(id: string) {
-    if (!confirm("Remove this account? Its own transaction history stays, but the page will stop working.")) return;
-    setBusy(true);
-    await fetch(`/api/dashboard/sub-accounts/${id}`, { method: "DELETE", headers: { "x-user-token": token } });
-    setBusy(false); fetchAccounts();
-  }
-
-  if (accounts.length <= 1) return null;
-
-  return (
-    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-      <p style={{ fontSize: 15, fontWeight: 700 }}>Accounts</p>
-      {accounts.map(a => (
-        <div key={a.id} className="list-row">
-          <div className="row-left">
-            <Avatar name={a.displayName} img={a.profilePic} seed={a.username} size={36} />
-            <div>
-              <p className="row-title" style={{ marginBottom: 0 }}>{a.displayName}{a.id === user.id && <span style={{ color: "var(--primary)", fontWeight: 600 }}> · Active</span>}</p>
-              <p className="row-sub">realcash.online/pay/{a.username}</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {a.id !== user.id && <button onClick={() => switchTo(a.id)} disabled={busy} className="btn btn-outline btn-sm">Switch</button>}
-            {a.id !== user.id && !user.isSubAccount && <button onClick={() => remove(a.id)} disabled={busy} className="btn btn-danger-soft btn-sm">Remove</button>}
-          </div>
-        </div>
-      ))}
-      {error && <p className="error-text">{error}</p>}
-    </div>
-  );
-}
-
 function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw }: {
   token: string; user: UserInfo; onUpdate: () => void; onLogout: () => void;
   withdrawals: Withdrawal[]; onWithdraw: () => void;
@@ -509,8 +456,6 @@ function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {msg && <div style={{ background: msg.startsWith("✓") ? "var(--primary-soft)" : "var(--danger-soft)", borderRadius: 12, padding: "10px 14px", color: msg.startsWith("✓") ? "var(--primary-dark)" : "var(--danger)", fontSize: 13, fontWeight: 600 }}>{msg}</div>}
 
-          <AccountsCard token={token} user={user} />
-
           <form onSubmit={save} className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 15, fontWeight: 700 }}>Profile</p>
             <label className="avatar-upload">
@@ -526,10 +471,8 @@ function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw 
               <input className="input" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} />
               <p className="hint">realcash.online/pay/{form.username}</p>
             </div>
-            {!user.isSubAccount && <>
-              <div className="field"><label className="field-label">Current Password (required)</label><input className="input" type="password" value={form.currentPassword} onChange={e => setForm(p => ({ ...p, currentPassword: e.target.value }))} required /></div>
-              <div className="field"><label className="field-label">New Password (optional)</label><input className="input" type="password" placeholder="Leave blank to keep" value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} /></div>
-            </>}
+            <div className="field"><label className="field-label">Current Password (required)</label><input className="input" type="password" value={form.currentPassword} onChange={e => setForm(p => ({ ...p, currentPassword: e.target.value }))} required /></div>
+            <div className="field"><label className="field-label">New Password (optional)</label><input className="input" type="password" placeholder="Leave blank to keep" value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} /></div>
             <button type="submit" disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
               {saving ? "Saving…" : "Save Settings"}
             </button>
