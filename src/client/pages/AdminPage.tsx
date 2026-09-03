@@ -32,6 +32,8 @@ const NAV_ITEMS: { key: Tab; label: string; icon: (on: boolean) => React.ReactNo
   { key: "messages", label: "Messages", icon: (on) => <IcoMail on={on} /> },
   { key: "settings", label: "Settings", icon: (on) => <IcoSettings on={on} /> },
 ];
+// Withdraw and Messages live inside Settings on mobile instead of taking a bottom-bar slot.
+const MOBILE_NAV_ITEMS = NAV_ITEMS.filter(i => i.key !== "withdrawals" && i.key !== "messages");
 
 function playSound() {
   try {
@@ -117,12 +119,12 @@ export default function AdminPage() {
           {tab === "users" && <UsersTab pw={pw} />}
           {tab === "withdrawals" && <WithdrawalsTab pw={pw} />}
           {tab === "messages" && <MessagesTab pw={pw} />}
-          {tab === "settings" && <SettingsTab pw={pw} onLogout={() => { localStorage.removeItem("admin_pw"); setAuthed(false); setPw(""); }} />}
+          {tab === "settings" && <SettingsTab pw={pw} setTab={setTab} onLogout={() => { localStorage.removeItem("admin_pw"); setAuthed(false); setPw(""); }} />}
         </div>
       </div>
 
       <div className="bottom-nav">
-        {NAV_ITEMS.map(item => (
+        {MOBILE_NAV_ITEMS.map(item => (
           <button key={item.key} onClick={() => setTab(item.key)}>
             {item.icon(tab === item.key)}
             <span className="bottom-nav-label" style={{ color: tab === item.key ? "#00C853" : "var(--text-muted)" }}>{item.label}</span>
@@ -663,7 +665,7 @@ function MessagesTab({ pw }: { pw: string }) {
   );
 }
 
-function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
+function SettingsTab({ pw, onLogout, setTab }: { pw: string; onLogout: () => void; setTab: (t: Tab) => void }) {
   const [settings, setSettings] = useState<{ displayName: string; username: string; feePercentage: number; email: string; profilePic: string | null }>({ displayName: "", username: "", feePercentage: 0, email: "", profilePic: null });
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -694,6 +696,17 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
       <div className="mobile-topbar"><h1>Settings</h1></div>
       <div className="section-stack" style={{ maxWidth: 560 }}>
         {msg && <div style={{ background: msg.startsWith("✓") ? "var(--primary-soft)" : "var(--danger-soft)", borderRadius: 12, padding: "10px 14px", color: msg.startsWith("✓") ? "var(--primary-dark)" : "var(--danger)", fontSize: 13, fontWeight: 600 }}>{msg}</div>}
+
+        <div className="card" style={{ overflow: "hidden" }}>
+          <button onClick={() => setTab("withdrawals")} className="list-row" style={{ width: "100%", padding: "14px 16px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+            <div className="row-left"><IcoMoney on={false} /><span className="row-title" style={{ marginBottom: 0 }}>Withdrawals</span></div>
+            <span style={{ color: "var(--chevron)" }}>›</span>
+          </button>
+          <button onClick={() => setTab("messages")} className="list-row" style={{ width: "100%", padding: "14px 16px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+            <div className="row-left"><IcoMail on={false} /><span className="row-title" style={{ marginBottom: 0 }}>Messages</span></div>
+            <span style={{ color: "var(--chevron)" }}>›</span>
+          </button>
+        </div>
 
         <form onSubmit={save} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
