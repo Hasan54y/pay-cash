@@ -43,7 +43,7 @@ export default function PaymentPage() {
   }, [username]);
 
   useEffect(() => {
-    if (displayName) document.title = `Pay ${displayName} on Cash App`;
+    if (displayName) document.title = `Pay ${displayName} via Cash App`;
   }, [displayName]);
 
   const amount = parseFloat(amountStr || "0");
