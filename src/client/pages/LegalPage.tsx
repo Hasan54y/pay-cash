@@ -1,12 +1,13 @@
-import { Link } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import ThemeToggle from "./../theme";
 
 function Layout({ title, children }: { title: string; children: React.ReactNode }) {
+  const navigate = useNavigate();
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)" }}>
       <ThemeToggle />
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 20px 80px" }}>
-        <Link to="/login" style={{ fontSize: 13, color: "var(--primary)", textDecoration: "none" }}>&larr; Back</Link>
+        <button onClick={() => navigate(-1)} style={{ fontSize: 13, color: "var(--primary)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>&larr; Back</button>
         <h1 style={{ fontSize: 26, fontWeight: 800, margin: "16px 0 24px" }}>{title}</h1>
         <div style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text)", display: "flex", flexDirection: "column", gap: 16 }}>
           {children}
@@ -17,16 +18,22 @@ function Layout({ title, children }: { title: string; children: React.ReactNode 
 }
 
 export function TermsPage() {
+  const [params] = useSearchParams();
+  const isCustomer = params.get("audience") === "customer";
+
   return (
     <Layout title="Terms of Service">
-      <p>Pay Cash ("we," "us") lets sub-admins accept payments from senders via Cash App's Bitcoin Lightning payment option, and forwards the resulting value to sub-admins as a local-currency balance, withdrawable via bKash, Nagad, or bank transfer.</p>
+      <p>
+        Pay Cash ("we," "us") lets sub-admins accept payments from senders via Cash App's Bitcoin Lightning payment option
+        {isCustomer ? "." : ", and forwards the resulting value to sub-admins as a local-currency balance, withdrawable via bKash, Nagad, or bank transfer."}
+      </p>
       <p><strong>Not affiliated with Cash App.</strong> Pay Cash is an independent service and is not operated, endorsed, or affiliated with Block, Inc. or Cash App. We use Cash App's public Lightning payment feature as a payment rail, nothing more.</p>
-      <p><strong>Fees.</strong> A service fee, if applicable to your account, is shown to you in your sub-admin settings before you send or receive payments through your page.</p>
-      <p><strong>Sub-admin responsibilities.</strong> You're responsible for the accuracy of the payout details you submit (bKash/Nagad/bank info) and for any payment page you operate. Don't use Pay Cash for unlawful purposes, fraud, or to collect payments under false pretenses.</p>
+      {!isCustomer && <p><strong>Fees.</strong> A service fee, if applicable to your account, is shown to you in your sub-admin settings before you send or receive payments through your page.</p>}
+      {!isCustomer && <p><strong>Sub-admin responsibilities.</strong> You're responsible for the accuracy of the payout details you submit (bKash/Nagad/bank info) and for any payment page you operate. Don't use Pay Cash for unlawful purposes, fraud, or to collect payments under false pretenses.</p>}
       <p><strong>Payment finality.</strong> Payments are confirmed once verified against our payment processor's records. Expired or unpaid invoices are not credited.</p>
       <p><strong>No guarantees.</strong> The service is provided "as is." We don't guarantee uninterrupted availability, and currency conversion rates may change day to day.</p>
       <p><strong>Termination.</strong> We may suspend or close an account that violates these terms or applicable law.</p>
-      <p><strong>Contact.</strong> Questions about these terms: hasanmahmud6634@gmail.com.</p>
+      {!isCustomer && <p><strong>Contact.</strong> Questions about these terms: hasanmahmud6634@gmail.com.</p>}
     </Layout>
   );
 }

@@ -180,7 +180,7 @@ export default function PaymentPage() {
           </button>
         </div>
       </div>
-      <LegalFooter />
+      <LegalFooter termsAudience="customer" />
     </div>
   );
 }
