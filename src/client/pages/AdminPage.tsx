@@ -659,7 +659,7 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
           <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 15, fontWeight: 700 }}>Payment</p>
             <div className="field">
-              <label className="field-label">Hidden Fee %</label>
+              <label className="field-label">Fee %</label>
               <input className="input" type="number" step="0.1" min="0" value={settings.feePercentage} onChange={e => setSettings(p => ({ ...p, feePercentage: parseFloat(e.target.value) || 0 }))} />
               <p className="hint" style={{ color: "var(--text-muted)" }}>e.g. 3% on $100 = customer pays $103</p>
             </div>

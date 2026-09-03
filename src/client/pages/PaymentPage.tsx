@@ -146,11 +146,10 @@ export default function PaymentPage() {
       <div className="pay-card" style={{ paddingBottom: 24 }}>
         <div className="pay-grabber" />
         <div className="send-money-head">
-          <h1>Send Money</h1>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <Avatar name={displayName || "?"} img={profilePic} seed={username ?? displayName} size={88} />
           </div>
-          <p className="send-money-name">{displayName || " "}</p>
+          <h1>Enter amount and Pay {displayName || " "}</h1>
         </div>
 
         <p className="send-money-amount">${amountStr === "" ? "0" : amountStr}</p>
