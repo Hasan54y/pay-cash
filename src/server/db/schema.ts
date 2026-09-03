@@ -14,6 +14,13 @@ export const usersTable = pgTable("users", {
   feePercentage: numeric("fee_percentage", { precision: 5, scale: 2 }).default("0"),
   balance: numeric("balance", { precision: 10, scale: 2 }).notNull().default("0"),
   profilePic: text("profile_pic"),
+  // A sub-account created by a sub-admin under their own account: shares the parent's
+  // balance/withdrawal history but has its own page, username, and transactions. Never
+  // logged into directly (no known password) — only reachable by switching from the parent.
+  parentUserId: text("parent_user_id"),
+  // A sub-account created by the top-level admin: an extra named payment page with no
+  // balance ledger of its own (matches how the admin's own revenue isn't balance-tracked).
+  isAdminSubAccount: boolean("is_admin_sub_account").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

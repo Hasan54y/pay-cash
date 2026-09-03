@@ -665,6 +665,75 @@ function MessagesTab({ pw }: { pw: string }) {
   );
 }
 
+interface AdminSubAccount { id: string; displayName: string; username: string; profilePic: string | null; createdAt: string; }
+
+function AdminSubAccountsCard({ pw }: { pw: string }) {
+  const [accounts, setAccounts] = useState<AdminSubAccount[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ displayName: "", username: "" });
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { fetchAccounts(); }, []);
+  async function fetchAccounts() {
+    const r = await fetch("/api/admin/sub-accounts", { headers: { "x-admin-password": pw } });
+    if (r.ok) setAccounts(await r.json());
+  }
+
+  async function create(e: React.FormEvent) {
+    e.preventDefault(); setError(""); setBusy(true);
+    const r = await fetch("/api/admin/sub-accounts", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pw },
+      body: JSON.stringify(form),
+    });
+    const d = await r.json() as { error?: string };
+    setBusy(false);
+    if (!r.ok) { setError(d.error ?? "Failed"); return; }
+    setForm({ displayName: "", username: "" }); setAdding(false); fetchAccounts();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Remove this payment page? Its transaction history stays, but the link will stop working.")) return;
+    setBusy(true);
+    await fetch(`/api/admin/sub-accounts/${id}`, { method: "DELETE", headers: { "x-admin-password": pw } });
+    setBusy(false); fetchAccounts();
+  }
+
+  return (
+    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+      <p style={{ fontSize: 15, fontWeight: 700 }}>Extra Payment Pages</p>
+      {accounts.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>None yet — create additional named payment pages, each tracked separately in Payments.</p>}
+      {accounts.map(a => (
+        <div key={a.id} className="list-row">
+          <div className="row-left">
+            <Avatar name={a.displayName} img={a.profilePic} seed={a.username} size={36} />
+            <div>
+              <p className="row-title" style={{ marginBottom: 0 }}>{a.displayName}</p>
+              <p className="row-sub">realcash.online/pay/{a.username}</p>
+            </div>
+          </div>
+          <button onClick={() => remove(a.id)} disabled={busy} className="btn btn-danger-soft btn-sm">Remove</button>
+        </div>
+      ))}
+
+      {error && <p className="error-text">{error}</p>}
+
+      {adding ? (
+        <form onSubmit={create} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <input className="input" placeholder="Display name" required value={form.displayName} onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))} />
+          <input className="input" placeholder="Username" required value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button type="button" onClick={() => setAdding(false)} className="btn btn-muted" style={{ flex: 1 }}>Cancel</button>
+            <button type="submit" disabled={busy} className="btn btn-primary" style={{ flex: 1, color: "#fff" }}>{busy ? "…" : "Create"}</button>
+          </div>
+        </form>
+      ) : (
+        <button onClick={() => setAdding(true)} className="btn btn-muted btn-sm" style={{ alignSelf: "flex-start" }}>+ Add Page</button>
+      )}
+    </div>
+  );
+}
+
 function SettingsTab({ pw, onLogout, setTab }: { pw: string; onLogout: () => void; setTab: (t: Tab) => void }) {
   const [settings, setSettings] = useState<{ displayName: string; username: string; feePercentage: number; email: string; profilePic: string | null }>({ displayName: "", username: "", feePercentage: 0, email: "", profilePic: null });
   const [newPassword, setNewPassword] = useState("");
@@ -707,6 +776,8 @@ function SettingsTab({ pw, onLogout, setTab }: { pw: string; onLogout: () => voi
             <span style={{ color: "var(--chevron)" }}>›</span>
           </button>
         </div>
+
+        <AdminSubAccountsCard pw={pw} />
 
         <form onSubmit={save} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
