@@ -404,7 +404,9 @@ app.get("/api/dashboard/payments", async (req, res) => {
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  await reconcilePayments(user.id);
+  // Don't block the page load on Speed API round-trips — reconcile in the
+  // background so this response stays fast; the next poll picks up any change.
+  reconcilePayments(user.id).catch(() => {});
 
   const rows = await db.select().from(paymentsTable)
     .where(eq(paymentsTable.userId, user.id))
@@ -518,7 +520,9 @@ app.get("/api/admin/payments", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  await reconcilePayments();
+  // Don't block the page load on Speed API round-trips — reconcile in the
+  // background so this response stays fast; the next poll picks up any change.
+  reconcilePayments().catch(() => {});
 
   const rows = await db.select({
     payment: paymentsTable, user: { displayName: usersTable.displayName, username: usersTable.username }
