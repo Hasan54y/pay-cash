@@ -539,6 +539,18 @@ app.put("/api/admin/users/:id", async (req, res) => {
   res.json({ success: true });
 });
 
+app.delete("/api/admin/users/:id", async (req, res) => {
+  const pw = adminAuth(req);
+  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  // Payments/withdrawals/push-subscriptions reference this user; detach payments
+  // (keep the revenue record, just unattributed) and drop the rest before deleting.
+  await db.update(paymentsTable).set({ userId: null }).where(eq(paymentsTable.userId, req.params.id));
+  await db.delete(withdrawalsTable).where(eq(withdrawalsTable.userId, req.params.id));
+  await db.delete(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.userId, req.params.id));
+  await db.delete(usersTable).where(eq(usersTable.id, req.params.id));
+  res.json({ success: true });
+});
+
 app.get("/api/admin/withdrawals", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }

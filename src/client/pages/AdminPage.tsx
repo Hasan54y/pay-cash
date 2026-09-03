@@ -418,6 +418,14 @@ function UsersTab({ pw }: { pw: string }) {
     if (r.ok) { fetchUsers(); setEditing(null); setMsg("✓ Updated!"); setTimeout(() => setMsg(""), 2000); }
   }
 
+  async function deleteUser(u: User) {
+    if (!confirm(`Delete ${u.displayName} (@${u.username})? This removes the account and its payment page permanently. Their balance is $${u.balance.toFixed(2)} — make sure any pending payout is settled first.`)) return;
+    setSaving(true);
+    const r = await fetch(`/api/admin/users/${u.id}`, { method: "DELETE", headers: { "x-admin-password": pw } });
+    setSaving(false);
+    if (r.ok) { fetchUsers(); setMsg("✓ Deleted"); setTimeout(() => setMsg(""), 2000); }
+  }
+
   const statusColor: Record<string, string> = { active: "var(--primary-dark)", pending: "var(--warning-soft-text)", rejected: "var(--danger)", suspended: "var(--danger)" };
   const statusBg: Record<string, string> = { active: "var(--primary-soft)", pending: "var(--warning-soft)", rejected: "var(--danger-soft)", suspended: "var(--danger-soft)" };
 
@@ -465,6 +473,7 @@ function UsersTab({ pw }: { pw: string }) {
                 {u.status === "active" && <button onClick={() => updateUser(u.id, { status: "suspended" })} className="btn btn-danger-soft btn-sm">Suspend</button>}
                 {u.status === "suspended" && <button onClick={() => updateUser(u.id, { status: "active" })} className="btn btn-success-soft btn-sm">Activate</button>}
                 <button onClick={() => { if (confirm(`Clear $${u.balance.toFixed(2)} balance for ${u.displayName}?`)) updateUser(u.id, { clearBalance: "true" }); }} className="btn btn-sm" style={{ background: "var(--warning-soft)", color: "var(--warning-soft-text)" }}>Clear Balance</button>
+                <button onClick={() => deleteUser(u)} className="btn btn-danger-soft btn-sm">Delete</button>
               </div>
             </div>
           ))}
