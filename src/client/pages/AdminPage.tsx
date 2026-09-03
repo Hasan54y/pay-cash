@@ -282,13 +282,19 @@ function PaymentsTab({ pw }: { pw: string }) {
     fetch(`/api/admin/payments/${id}/check`, { method: "PUT", headers: { "Content-Type": "application/json", "x-admin-password": pw }, body: JSON.stringify({ checked: !checked.has(id) }) }).catch(() => {});
   }
 
-  useEffect(() => { fetch("/api/admin/payments", { headers: { "x-admin-password": pw } }).then(r => r.json()).then(setData); }, []);
+  useEffect(() => {
+    const fetchPayments = () => fetch("/api/admin/payments", { headers: { "x-admin-password": pw } }).then(r => r.json()).then(setData);
+    fetchPayments();
+    // Payment status is reconciled against Speed server-side on every fetch, so
+    // polling here keeps the list current without needing a manual sync.
+    const iv = setInterval(fetchPayments, 30000);
+    return () => clearInterval(iv);
+  }, []);
 
   async function sync() {
     setSyncing(true); setSyncMsg("");
-    const r = await fetch("/api/admin/sync", { method: "POST", headers: { "x-admin-password": pw } });
-    const d = await r.json() as { checked: number; updated: number };
-    setSyncing(false); setSyncMsg(`Updated ${d.updated} of ${d.checked}`);
+    await fetch("/api/admin/sync", { method: "POST", headers: { "x-admin-password": pw } });
+    setSyncing(false); setSyncMsg("Synced");
     fetch("/api/admin/payments", { headers: { "x-admin-password": pw } }).then(r => r.json()).then(setData);
   }
 

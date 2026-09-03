@@ -4,7 +4,7 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { db, usersTable, paymentsTable, withdrawalsTable, settingsTable, pushSubscriptionsTable, contactMessagesTable } from "./db/index.js";
-import { eq, desc, sql, and, lt, ne } from "drizzle-orm";
+import { eq, desc, sql, and, or, lt, gt, ne } from "drizzle-orm";
 
 const app = express();
 app.use(cors());
@@ -81,6 +81,68 @@ async function sendPushNotification(userId: string | null, title: string, body: 
       } catch { /**/ }
     }
   } catch { /**/ }
+}
+
+// Transitions a payment to paid and credits the balance, from any non-paid status
+// (pending or wrongly-marked expired) — safe to call more than once, only the first
+// call actually does anything since it's gated on the row not already being paid.
+async function markPaymentPaid(paymentId: string) {
+  const result = await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() })
+    .where(and(eq(paymentsTable.id, paymentId), ne(paymentsTable.status, "paid"))).returning();
+  if (result.length === 0) return;
+  const p = result[0];
+  const amount = parseFloat(String(p.amountUsd));
+
+  if (p.userId) {
+    await db.update(usersTable).set({
+      balance: sql`${usersTable.balance}::numeric + ${amount}`
+    }).where(eq(usersTable.id, p.userId));
+    const [user] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, p.userId));
+    await sendPushNotification(p.userId, "Payment Received!", `$${amount.toFixed(2)} received on your page`);
+    await sendPushNotification(null, `Payment - ${user?.displayName ?? ""}`, `$${amount.toFixed(2)} received`);
+  } else {
+    const displayName = (await getSetting("display_name")) ?? "";
+    await sendPushNotification(null, `Payment Received!`, `$${amount.toFixed(2)} received - ${displayName}`);
+  }
+
+  const client = sseClients.get(paymentId);
+  if (client) {
+    client.write(`data: ${JSON.stringify({ status: "paid", amountUsd: amount, shortId: p.shortId, lightningInvoice: p.lightningInvoice })}\n\n`);
+    sseClients.delete(paymentId);
+  }
+}
+
+// Replaces a blind "10 minutes old = expired" guess with a real check against Speed.
+// Also re-checks recently-expired rows, so a payment that was wrongly marked expired
+// (e.g. because the webhook was briefly misconfigured) self-heals back to paid the
+// next time anyone loads a payments list — no manual sync needed.
+async function reconcilePayments(userId?: string) {
+  const staleCutoff = new Date(Date.now() - 10 * 60 * 1000);
+  const recheckWindow = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const scopeCondition = userId ? eq(paymentsTable.userId, userId) : undefined;
+
+  const candidates = await db.select().from(paymentsTable).where(and(
+    scopeCondition,
+    or(
+      and(eq(paymentsTable.status, "pending"), lt(paymentsTable.createdAt, staleCutoff)),
+      and(eq(paymentsTable.status, "expired"), gt(paymentsTable.createdAt, recheckWindow)),
+    ),
+  )).limit(50);
+
+  for (const row of candidates) {
+    try {
+      const r = await fetch(`${SPEED_API}/payments/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
+      if (!r.ok) continue;
+      const p = await r.json() as { status?: string };
+      const speedStatus = (p.status ?? "").toLowerCase();
+      if (["paid", "confirmed", "completed"].includes(speedStatus)) {
+        await markPaymentPaid(row.id);
+      } else if (speedStatus === "expired" && row.status === "pending") {
+        await db.update(paymentsTable).set({ status: "expired" }).where(eq(paymentsTable.id, row.id));
+      }
+      // Anything else (still pending on Speed, or an unrecognized status): leave as-is and retry later.
+    } catch { /* Speed lookup failed; retry on the next reconcile pass */ }
+  }
 }
 
 // ── OG Image ──
@@ -304,35 +366,8 @@ app.post("/api/webhook/speed", async (req, res) => {
       const r = await fetch(`${SPEED_API}/payments/${paymentId}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
       const verified = await r.json() as { status?: string };
       const isPaid = r.ok && ["paid", "confirmed", "completed"].includes((verified.status ?? "").toLowerCase());
-
-      if (isPaid) {
-        const result = await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() })
-          .where(and(eq(paymentsTable.id, paymentId), eq(paymentsTable.status, "pending"))).returning();
-        if (result.length > 0) {
-          const p = result[0];
-          const amount = parseFloat(String(p.amountUsd));
-
-          // Credit sub-admin balance
-          if (p.userId) {
-            await db.update(usersTable).set({
-              balance: sql`${usersTable.balance}::numeric + ${amount}`
-            }).where(eq(usersTable.id, p.userId));
-            const [user] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, p.userId));
-            await sendPushNotification(p.userId, "Payment Received!", `$${amount.toFixed(2)} received on your page`);
-            await sendPushNotification(null, `Payment - ${user?.displayName ?? ""}`, `$${amount.toFixed(2)} received`);
-          } else {
-            const displayName = (await getSetting("display_name")) ?? "";
-            await sendPushNotification(null, `Payment Received!`, `$${amount.toFixed(2)} received - ${displayName}`);
-          }
-
-          const client = sseClients.get(paymentId);
-          if (client) {
-            client.write(`data: ${JSON.stringify({ status: "paid", amountUsd: amount, shortId: p.shortId, lightningInvoice: p.lightningInvoice })}\n\n`);
-            sseClients.delete(paymentId);
-          }
-        }
-      }
-    } catch { /* Speed lookup failed; the periodic /api/admin/sync reconciliation will catch it later */ }
+      if (isPaid) await markPaymentPaid(paymentId);
+    } catch { /* Speed lookup failed; reconcilePayments() will catch it on the next page load */ }
   }
   res.sendStatus(200);
 });
@@ -369,9 +404,7 @@ app.get("/api/dashboard/payments", async (req, res) => {
   const user = await getUserFromToken(token);
   if (!user) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
-  await db.update(paymentsTable).set({ status: "expired" })
-    .where(and(eq(paymentsTable.status, "pending"), lt(paymentsTable.createdAt, tenMinsAgo), eq(paymentsTable.userId, user.id)));
+  await reconcilePayments(user.id);
 
   const rows = await db.select().from(paymentsTable)
     .where(eq(paymentsTable.userId, user.id))
@@ -485,9 +518,7 @@ app.get("/api/admin/payments", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
-  await db.update(paymentsTable).set({ status: "expired" })
-    .where(and(eq(paymentsTable.status, "pending"), lt(paymentsTable.createdAt, tenMinsAgo)));
+  await reconcilePayments();
 
   const rows = await db.select({
     payment: paymentsTable, user: { displayName: usersTable.displayName, username: usersTable.username }
@@ -631,23 +662,8 @@ app.get("/api/admin/speed-balance", async (req, res) => {
 app.post("/api/admin/sync", async (req, res) => {
   const pw = adminAuth(req);
   if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const pending = await db.select().from(paymentsTable).where(eq(paymentsTable.status, "pending")).limit(50);
-  let updated = 0;
-  for (const row of pending) {
-    try {
-      const r = await fetch(`${SPEED_API}/payments/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
-      if (!r.ok) continue;
-      const p = await r.json() as { status?: string };
-      if (["paid","completed","confirmed"].includes((p.status ?? "").toLowerCase())) {
-        await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() }).where(eq(paymentsTable.id, row.id));
-        
-        const client = sseClients.get(row.id);
-        if (client) { client.write(`data: ${JSON.stringify({ status: "paid" })}\n\n`); sseClients.delete(row.id); }
-        updated++;
-      }
-    } catch { /**/ }
-  }
-  res.json({ checked: pending.length, updated });
+  await reconcilePayments();
+  res.json({ success: true });
 });
 
 // ── Frontend ──
