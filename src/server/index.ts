@@ -291,39 +291,48 @@ app.get("/api/payment-status/:id", async (req, res) => {
 
 app.post("/api/webhook/speed", async (req, res) => {
   const event = (req.body ?? {}) as Record<string, unknown>;
-  const eventType = ((event.type ?? event.event ?? "") as string).toLowerCase();
   const dataRaw = (event.data ?? {}) as Record<string, unknown>;
   const data = ((dataRaw.object as Record<string, unknown>) ?? dataRaw) as Record<string, unknown>;
   const paymentId = (data.id ?? data.payment_id ?? event.id) as string | undefined;
-  const dataStatus = ((data.status as string) ?? "").toLowerCase();
-  const isPaid = ["payment.paid","payment.confirmed","payment.completed","invoice.paid"].includes(eventType) || ["paid","confirmed","completed"].includes(dataStatus);
 
-  if (isPaid && paymentId) {
-    const result = await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() })
-      .where(and(eq(paymentsTable.id, paymentId), eq(paymentsTable.status, "pending"))).returning();
-    if (result.length > 0) {
-      const p = result[0];
-      const amount = parseFloat(String(p.amountUsd));
+  // This endpoint is publicly reachable and its URL is shown in the admin panel, so the
+  // webhook body's claimed status can't be trusted (anyone could POST a fake "paid" event
+  // for an invoice they created themselves). Always re-verify the real status directly
+  // with Speed's API before crediting any balance — the body is only used to find the ID.
+  if (paymentId) {
+    try {
+      const r = await fetch(`${SPEED_API}/payments/${paymentId}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
+      const verified = await r.json() as { status?: string };
+      const isPaid = r.ok && ["paid", "confirmed", "completed"].includes((verified.status ?? "").toLowerCase());
 
-      // Credit sub-admin balance
-      if (p.userId) {
-        await db.update(usersTable).set({
-          balance: sql`${usersTable.balance}::numeric + ${amount}`
-        }).where(eq(usersTable.id, p.userId));
-        const [user] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, p.userId));
-        await sendPushNotification(p.userId, "Payment Received!", `$${amount.toFixed(2)} received on your page`);
-        await sendPushNotification(null, `Payment - ${user?.displayName ?? ""}`, `$${amount.toFixed(2)} received`);
-      } else {
-        const displayName = (await getSetting("display_name")) ?? "";
-        await sendPushNotification(null, `Payment Received!`, `$${amount.toFixed(2)} received - ${displayName}`);
+      if (isPaid) {
+        const result = await db.update(paymentsTable).set({ status: "paid", paidAt: new Date() })
+          .where(and(eq(paymentsTable.id, paymentId), eq(paymentsTable.status, "pending"))).returning();
+        if (result.length > 0) {
+          const p = result[0];
+          const amount = parseFloat(String(p.amountUsd));
+
+          // Credit sub-admin balance
+          if (p.userId) {
+            await db.update(usersTable).set({
+              balance: sql`${usersTable.balance}::numeric + ${amount}`
+            }).where(eq(usersTable.id, p.userId));
+            const [user] = await db.select({ displayName: usersTable.displayName }).from(usersTable).where(eq(usersTable.id, p.userId));
+            await sendPushNotification(p.userId, "Payment Received!", `$${amount.toFixed(2)} received on your page`);
+            await sendPushNotification(null, `Payment - ${user?.displayName ?? ""}`, `$${amount.toFixed(2)} received`);
+          } else {
+            const displayName = (await getSetting("display_name")) ?? "";
+            await sendPushNotification(null, `Payment Received!`, `$${amount.toFixed(2)} received - ${displayName}`);
+          }
+
+          const client = sseClients.get(paymentId);
+          if (client) {
+            client.write(`data: ${JSON.stringify({ status: "paid", amountUsd: amount, shortId: p.shortId, lightningInvoice: p.lightningInvoice })}\n\n`);
+            sseClients.delete(paymentId);
+          }
+        }
       }
-
-      const client = sseClients.get(paymentId);
-      if (client) {
-        client.write(`data: ${JSON.stringify({ status: "paid", amountUsd: amount, shortId: p.shortId, lightningInvoice: p.lightningInvoice })}\n\n`);
-        sseClients.delete(paymentId);
-      }
-    }
+    } catch { /* Speed lookup failed; the periodic /api/admin/sync reconciliation will catch it later */ }
   }
   res.sendStatus(200);
 });
@@ -611,27 +620,33 @@ if (process.env.NODE_ENV === "production") {
       const fs = await import("fs");
       let html = fs.readFileSync(path.join(publicDir, "index.html"), "utf-8");
 
-      // Check if this is a payment page
+      // Only payment pages get a rich link preview (title + image naming who
+      // to pay); every other route (signup, login, dashboard, admin, ...) gets
+      // its preview metadata stripped so it doesn't render a misleading
+      // "Enter amount and Pay X" card when shared.
       const payMatch = req.path.match(/^\/pay\/([a-z0-9_-]+)$/i);
-      let displayName = (await getSetting("display_name")) ?? "Pay Cash";
-      let ogImageUrl = `https://realcash.online/og-image.svg`;
 
       if (payMatch) {
         const slug = payMatch[1];
-        // Try sub-admin
+        let displayName = (await getSetting("display_name")) ?? "Pay Cash";
         const [user] = await db.select({ displayName: usersTable.displayName })
           .from(usersTable).where(and(eq(usersTable.username, slug), eq(usersTable.status, "active")));
         if (user) displayName = user.displayName;
-        ogImageUrl = `https://realcash.online/og-image.svg?u=${slug}`;
-      }
+        const ogImageUrl = `https://realcash.online/og-image.svg?u=${slug}`;
 
-      const title = `Enter amount and Pay ${displayName}`;
-      html = html
-        .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
-        .replace(/(<meta property="og:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
-        .replace(/(<meta property="og:image"[^>]*content=")[^"]*(")/g, `$1${ogImageUrl}$2`)
-        .replace(/(<meta name="twitter:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
-        .replace(/(<meta name="twitter:image"[^>]*content=")[^"]*(")/g, `$1${ogImageUrl}$2`);
+        const title = `Enter amount and Pay ${displayName}`;
+        html = html
+          .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+          .replace(/(<meta property="og:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
+          .replace(/(<meta property="og:image"[^>]*content=")[^"]*(")/g, `$1${ogImageUrl}$2`)
+          .replace(/(<meta name="twitter:title"[^>]*content=")[^"]*(")/g, `$1${title}$2`)
+          .replace(/(<meta name="twitter:image"[^>]*content=")[^"]*(")/g, `$1${ogImageUrl}$2`);
+      } else {
+        html = html
+          .replace(/<title>.*?<\/title>/, `<title>Pay Cash</title>`)
+          .replace(/\s*<meta property="og:[^"]*"[^>]*>\n?/g, "")
+          .replace(/\s*<meta name="twitter:[^"]*"[^>]*>\n?/g, "");
+      }
 
       res.setHeader("Content-Type", "text/html");
       res.send(html);
