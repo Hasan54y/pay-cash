@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "./../theme";
+import { LegalFooter } from "./../LegalFooter";
 
 export default function SignupPage() {
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", displayName: "", username: "", password: "" });
@@ -49,6 +50,7 @@ export default function SignupPage() {
             <p style={{ fontSize: 13, color: "var(--text)" }}>📧 hasanmahmud6634@gmail.com</p>
           </div>
           <Link to="/login" className="btn btn-primary btn-block">Go to Login</Link>
+          <LegalFooter />
         </div>
       </div>
     </div>
@@ -91,6 +93,7 @@ export default function SignupPage() {
           <p className="auth-foot">
             Already have an account? <Link to="/login">Login</Link>
           </p>
+          <LegalFooter />
         </div>
       </div>
     </div>

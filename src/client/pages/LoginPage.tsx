@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import ThemeToggle from "./../theme";
+import { LegalFooter } from "./../LegalFooter";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ usernameOrEmail: "", password: "" });
@@ -58,6 +59,7 @@ export default function LoginPage() {
           <p className="auth-foot">
             Don't have an account? <Link to="/signup">Sign Up</Link>
           </p>
+          <LegalFooter />
         </div>
       </div>
     </div>

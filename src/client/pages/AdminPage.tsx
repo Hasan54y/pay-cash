@@ -483,9 +483,8 @@ function UsersTab({ pw }: { pw: string }) {
                 <input className="input" type="number" value={editForm.bdtRate} onChange={e => setEditForm(p => ({ ...p, bdtRate: e.target.value }))} />
               </div>
               <div className="field">
-                <label className="field-label">HIDDEN FEE % (invisible to sub-admin)</label>
+                <label className="field-label">FEE %</label>
                 <input className="input" type="number" step="0.1" min="0" max="50" placeholder="0" value={editForm.feePercentage} onChange={e => setEditForm(p => ({ ...p, feePercentage: e.target.value }))} />
-                <p className="hint" style={{ color: "var(--text-muted)" }}>e.g. 3 = customer pays 3% extra. Sub-admin cannot see this.</p>
               </div>
               <div className="field">
                 <label className="field-label">NEW PASSWORD (optional)</label>

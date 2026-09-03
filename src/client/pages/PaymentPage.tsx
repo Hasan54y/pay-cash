@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Avatar } from "./../Avatar";
+import { LegalFooter } from "./../LegalFooter";
 
 interface Invoice { invoiceId: string; shortId: string; lightningInvoice: string; amountSats: number; amountUsd: number; }
 interface Receipt { amountUsd: number; displayName: string; shortId: string; lightningInvoice: string; paidAt: string; }
@@ -179,6 +180,7 @@ export default function PaymentPage() {
           </button>
         </div>
       </div>
+      <LegalFooter />
     </div>
   );
 }
