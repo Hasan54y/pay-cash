@@ -693,7 +693,7 @@ app.post("/api/admin/speed-withdraw", async (req, res) => {
 
   const r = await fetch(`${SPEED_API}/send`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: speedAuth(), "speed-version": "2022-04-15" },
+    headers: { "Content-Type": "application/json", Authorization: speedAuth(), "speed-version": "2022-10-15" },
     body: JSON.stringify({ amount: amountSats, currency: "SATS", withdraw_method: withdrawMethod, withdraw_request: destination.trim() }),
   });
   const sent = await r.json() as { id?: string; status?: string; fees?: number; errors?: { message?: string; type?: string }[]; message?: string };
