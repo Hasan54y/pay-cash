@@ -7,6 +7,8 @@ import ThemeToggle from "./../theme";
 import { MilestonesCard } from "./../Milestones";
 import { Avatar } from "./../Avatar";
 import { fileToDataUrl } from "./../imageUpload";
+import { useHiddenBalance } from "./../hiddenBalance";
+import { EyeToggle, maskAmount } from "./../EyeToggle";
 
 type Tab = "home" | "payments" | "paypage" | "settings";
 
@@ -51,6 +53,7 @@ export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>("home");
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [paymentsFilter, setPaymentsFilter] = useState<"all" | "paid" | "pending" | "expired" | "withdraw">("all");
+  const { hidden: balanceHidden, toggle: toggleBalanceHidden } = useHiddenBalance();
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
@@ -179,9 +182,12 @@ export default function DashboardPage() {
                   <span className="live-badge"><span className="live-dot" />Live</span>
                 </div>
                 <div className="balance-card">
-                  <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Present Balance</p>
-                  <p style={{ fontSize: 36, fontWeight: 900, color: "#00C853", marginBottom: 2 }}>${user.balance.toFixed(2)}</p>
-                  <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>≈ ৳{Math.round(user.balance * user.bdtRate).toLocaleString()} <span style={{ fontSize: 12 }}>@ ৳{user.bdtRate}/$</span></p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, margin: 0 }}>Present Balance</p>
+                    <EyeToggle hidden={balanceHidden} onToggle={toggleBalanceHidden} dark />
+                  </div>
+                  <p style={{ fontSize: 36, fontWeight: 900, color: "#00C853", marginBottom: 2 }}>{maskAmount(`$${user.balance.toFixed(2)}`, balanceHidden)}</p>
+                  <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>≈ {maskAmount(`৳${Math.round(user.balance * user.bdtRate).toLocaleString()}`, balanceHidden)} <span style={{ fontSize: 12 }}>@ ৳{user.bdtRate}/$</span></p>
                   <button onClick={() => setShowWithdraw(true)} className="btn btn-primary btn-pill btn-sm">
                     <IconWithdraw active={true} /> Withdraw
                   </button>
@@ -197,7 +203,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="stat-tile">
                     <p className="stat-label">Total</p>
-                    <p className="stat-value">${totalRevenue.toFixed(2)}</p>
+                    <p className="stat-value">{maskAmount(`$${totalRevenue.toFixed(2)}`, balanceHidden)}</p>
                     <p className="stat-sub">{paid.length} payments</p>
                   </div>
                 </div>
@@ -472,7 +478,7 @@ function SettingsTab({ token, user, onUpdate, onLogout, withdrawals, onWithdraw 
               <p className="hint">realcash.online/pay/{form.username}</p>
             </div>
             <div className="field"><label className="field-label">Current Password (required)</label><input className="input" type="password" value={form.currentPassword} onChange={e => setForm(p => ({ ...p, currentPassword: e.target.value }))} required /></div>
-            <div className="field"><label className="field-label">New Password (optional)</label><input className="input" type="password" placeholder="Leave blank to keep" value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} /></div>
+            <div className="field"><label className="field-label">New Password (optional)</label><input className="input" type="password" placeholder="6-12 characters, leave blank to keep" value={form.newPassword} onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))} minLength={6} maxLength={12} /></div>
             <button type="submit" disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
               {saving ? "Saving…" : "Save Settings"}
             </button>

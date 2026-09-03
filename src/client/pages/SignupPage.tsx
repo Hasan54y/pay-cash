@@ -84,7 +84,7 @@ export default function SignupPage() {
               <input className="input" type="text" placeholder="Username (for payment page URL)" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} required />
               {form.username && <p className="hint" style={{ paddingLeft: 4 }}>realcash.online/pay/{form.username}</p>}
             </div>
-            <input className="input" type="password" placeholder="Password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={6} />
+            <input className="input" type="password" placeholder="Password (6-12 characters)" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={6} maxLength={12} />
             {error && <p className="error-text">{error}</p>}
             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
               {loading ? "Submitting…" : "Sign Up"}

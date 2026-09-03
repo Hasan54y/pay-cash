@@ -5,6 +5,8 @@ import ThemeToggle from "./../theme";
 import { MilestonesCard } from "./../Milestones";
 import { Avatar } from "./../Avatar";
 import { fileToDataUrl } from "./../imageUpload";
+import { useHiddenBalance } from "./../hiddenBalance";
+import { EyeToggle, maskAmount } from "./../EyeToggle";
 import { useState, useEffect, useRef } from "react";
 
 // Vector Icons
@@ -136,6 +138,7 @@ export default function AdminPage() {
 }
 
 function HomeTab({ pw }: { pw: string }) {
+  const { hidden: balanceHidden, toggle: toggleBalanceHidden } = useHiddenBalance();
   const [data, setData] = useState<AdminData | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState("");
@@ -187,13 +190,16 @@ function HomeTab({ pw }: { pw: string }) {
         <div className="balance-card">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
             <div style={{ borderRight: "1px solid rgba(255,255,255,0.08)", paddingRight: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 6 }}>Present Balance</p>
-              <p style={{ fontSize: 24, fontWeight: 900, marginBottom: 2, color: "#00C853" }}>${walletBalance != null ? walletBalance.toFixed(2) : "…"}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", margin: 0 }}>Present Balance</p>
+                <EyeToggle hidden={balanceHidden} onToggle={toggleBalanceHidden} dark />
+              </div>
+              <p style={{ fontSize: 24, fontWeight: 900, marginBottom: 2, color: "#00C853" }}>{maskAmount(walletBalance != null ? `$${walletBalance.toFixed(2)}` : "…", balanceHidden)}</p>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Speed Wallet</p>
             </div>
             <div style={{ paddingLeft: 16 }}>
               <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginBottom: 6 }}>Total Revenue</p>
-              <p style={{ fontSize: 24, fontWeight: 900, marginBottom: 2, color: "#fff" }}>${totalRevenue.toFixed(2)}</p>
+              <p style={{ fontSize: 24, fontWeight: 900, marginBottom: 2, color: "#fff" }}>{maskAmount(`$${totalRevenue.toFixed(2)}`, balanceHidden)}</p>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{paid.length} payments</p>
             </div>
           </div>
@@ -509,7 +515,7 @@ function UsersTab({ pw }: { pw: string }) {
               </div>
               <div className="field">
                 <label className="field-label">NEW PASSWORD (optional)</label>
-                <input className="input" type="password" placeholder="Leave blank to keep current" value={editForm.newPassword} onChange={e => setEditForm(p => ({ ...p, newPassword: e.target.value }))} />
+                <input className="input" type="password" placeholder="6-12 characters, leave blank to keep" value={editForm.newPassword} onChange={e => setEditForm(p => ({ ...p, newPassword: e.target.value }))} minLength={6} maxLength={12} />
               </div>
               <button onClick={() => updateUser(editing.id, { bdtRate: editForm.bdtRate, feePercentage: editForm.feePercentage, balance: editForm.balance, ...(editForm.newPassword ? { newPassword: editForm.newPassword } : {}) })}
                 disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
@@ -740,7 +746,7 @@ function SettingsTab({ pw, onLogout, setTab }: { pw: string; onLogout: () => voi
               {settings.username && <p className="hint">realcash.online/pay/{settings.username}</p>}
             </div>
             <div className="field"><label className="field-label">Recovery Email</label><input className="input" type="email" value={settings.email} onChange={e => setSettings(p => ({ ...p, email: e.target.value }))} /></div>
-            <div className="field"><label className="field-label">New Password</label><input className="input" type="password" placeholder="Leave blank to keep" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+            <div className="field"><label className="field-label">New Password</label><input className="input" type="password" placeholder="6-12 characters, leave blank to keep" value={newPassword} onChange={e => setNewPassword(e.target.value)} minLength={6} maxLength={12} /></div>
           </div>
           <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 15, fontWeight: 700 }}>Payment</p>

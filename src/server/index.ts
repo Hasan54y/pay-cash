@@ -232,6 +232,9 @@ app.post("/api/auth/signup", async (req, res) => {
   if (!fullName || !email || !username || !password || !displayName) {
     res.status(400).json({ error: "All fields required" }); return;
   }
+  if (password.length < 6 || password.length > 12) {
+    res.status(400).json({ error: "Password must be 6-12 characters" }); return;
+  }
   const existing = await db.select({ id: usersTable.id }).from(usersTable)
     .where(eq(usersTable.username, username.toLowerCase()));
   if (existing.length) { res.status(400).json({ error: "Username already taken" }); return; }
@@ -483,7 +486,7 @@ app.put("/api/dashboard/settings", async (req, res) => {
     if (existing.length) { res.status(400).json({ error: "Username taken" }); return; }
     updates.username = slug;
   }
-  if (newPassword && newPassword.length >= 6) updates.passwordHash = await bcrypt.hash(newPassword, 10);
+  if (newPassword && newPassword.length >= 6 && newPassword.length <= 12) updates.passwordHash = await bcrypt.hash(newPassword, 10);
   if (profilePic !== undefined) updates.profilePic = profilePic || null;
   if (Object.keys(updates).length) await db.update(usersTable).set(updates).where(eq(usersTable.id, user.id));
   res.json({ success: true });
@@ -515,7 +518,7 @@ app.put("/api/admin/settings", async (req, res) => {
   if (!await verifyAdmin(currentPassword)) { res.status(401).json({ error: "Wrong password" }); return; }
   if (displayName !== undefined) await setSetting("display_name", displayName.trim());
   if (username !== undefined) await setSetting("admin_username", username.trim().toLowerCase());
-  if (newPassword && newPassword.length >= 6) await setSetting("admin_password_hash", await bcrypt.hash(newPassword, 10));
+  if (newPassword && newPassword.length >= 6 && newPassword.length <= 12) await setSetting("admin_password_hash", await bcrypt.hash(newPassword, 10));
   if (feePercentage !== undefined) await setSetting("fee_percentage", feePercentage);
   if (email !== undefined) await setSetting("recovery_email", email);
   if (profilePic !== undefined) await setSetting("profile_pic", profilePic);
@@ -573,7 +576,7 @@ app.put("/api/admin/users/:id", async (req, res) => {
   if (status) updates.status = status as "active" | "pending" | "rejected" | "suspended";
   if (bdtRate) updates.bdtRate = bdtRate;
   if (feePercentage !== undefined && feePercentage !== "") updates.feePercentage = feePercentage;
-  if (newPassword && newPassword.length >= 6) updates.passwordHash = await bcrypt.hash(newPassword, 10);
+  if (newPassword && newPassword.length >= 6 && newPassword.length <= 12) updates.passwordHash = await bcrypt.hash(newPassword, 10);
   if (clearBalance === "true") updates.balance = "0";
   else if (balance !== undefined && balance !== "" && !isNaN(parseFloat(balance))) updates.balance = String(Math.max(0, parseFloat(balance)));
   await db.update(usersTable).set(updates).where(eq(usersTable.id, req.params.id));
