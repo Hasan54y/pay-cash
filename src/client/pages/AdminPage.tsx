@@ -529,6 +529,90 @@ function UsersTab({ pw }: { pw: string }) {
   );
 }
 
+interface SpeedWithdrawal { id: string; amountUsd: number; url: string; status: string; createdAt: string; }
+
+function SpeedWithdrawCard({ pw }: { pw: string }) {
+  const [history, setHistory] = useState<SpeedWithdrawal[]>([]);
+  const [amount, setAmount] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
+  const [fresh, setFresh] = useState<SpeedWithdrawal | null>(null);
+
+  useEffect(() => { fetchHistory(); }, []);
+  async function fetchHistory() {
+    const r = await fetch("/api/admin/speed-withdrawals", { headers: { "x-admin-password": pw } });
+    if (r.ok) setHistory(await r.json());
+  }
+
+  async function generate(e: React.FormEvent) {
+    e.preventDefault(); setError(""); setGenerating(true);
+    const r = await fetch("/api/admin/speed-withdraw", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-admin-password": pw },
+      body: JSON.stringify({ amountUsd: parseFloat(amount) }),
+    });
+    const d = await r.json() as { id?: string; url?: string; amountUsd?: number; error?: string };
+    setGenerating(false);
+    if (!r.ok || !d.url) { setError(d.error ?? "Failed"); return; }
+    setFresh({ id: d.id!, url: d.url, amountUsd: d.amountUsd!, status: "active", createdAt: new Date().toISOString() });
+    setAmount("");
+    fetchHistory();
+  }
+
+  const statusColor: Record<string, string> = { paid: "var(--primary-dark)", active: "var(--warning-soft-text)", deactivated: "var(--text-muted)" };
+  const statusBg: Record<string, string> = { paid: "var(--primary-soft)", active: "var(--warning-soft)", deactivated: "var(--neutral-soft)" };
+
+  return (
+    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div>
+        <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Withdraw from Speed</p>
+        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Generates a link paid out via Lightning — open it and scan with your own Lightning-compatible wallet (e.g. Cash App) to actually receive the funds. Speed has no bank-transfer option.</p>
+      </div>
+
+      <form onSubmit={generate} style={{ display: "flex", gap: 8 }}>
+        <input className="input" type="number" step="0.01" min="1" placeholder="Amount (USD)" value={amount} onChange={e => setAmount(e.target.value)} required style={{ flex: 1 }} />
+        <button type="submit" disabled={generating} className={`btn ${generating ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
+          {generating ? "…" : "Generate"}
+        </button>
+      </form>
+      {error && <p className="error-text">{error}</p>}
+
+      {fresh && (
+        <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+          <QRCanvas data={fresh.url} size={110} />
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>${fresh.amountUsd.toFixed(2)} ready</p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", wordBreak: "break-all", marginBottom: 8 }}>{fresh.url}</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => navigator.clipboard.writeText(fresh.url)} className="btn btn-outline btn-sm">Copy Link</button>
+              <a href={fresh.url} target="_blank" rel="noreferrer" className="btn btn-dark btn-sm">Open</a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8 }}>History</p>
+          {history.map(h => (
+            <div key={h.id} className="list-row">
+              <div>
+                <p className="row-title">${h.amountUsd.toFixed(2)}</p>
+                <p className="row-sub">{new Date(h.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="badge" style={{ color: statusColor[h.status] ?? "var(--text-muted)", background: statusBg[h.status] ?? "var(--surface-alt)" }}>
+                  {h.status.charAt(0).toUpperCase() + h.status.slice(1)}
+                </span>
+                {h.status === "active" && <a href={h.url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Open</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function WithdrawalsTab({ pw }: { pw: string }) {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [filter, setFilter] = useState<"all"|"pending"|"paid"|"rejected">("pending");
@@ -559,6 +643,10 @@ function WithdrawalsTab({ pw }: { pw: string }) {
         <h1>
           Withdrawals {pendingCount > 0 && <span style={{ background: "var(--danger)", color: "#fff", borderRadius: "50%", fontSize: 12, padding: "2px 7px", marginLeft: 6 }}>{pendingCount}</span>}
         </h1>
+      </div>
+
+      <div className="section-stack" style={{ paddingBottom: 0 }}>
+        <SpeedWithdrawCard pw={pw} />
       </div>
 
       <div className="chip-row">

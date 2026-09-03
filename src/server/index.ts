@@ -4,7 +4,7 @@ import compression from "compression";
 import path from "path";
 import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
-import { db, usersTable, paymentsTable, withdrawalsTable, settingsTable, pushSubscriptionsTable, contactMessagesTable } from "./db/index.js";
+import { db, usersTable, paymentsTable, withdrawalsTable, settingsTable, pushSubscriptionsTable, contactMessagesTable, speedWithdrawalsTable } from "./db/index.js";
 import { eq, desc, sql, and, or, lt, gt, ne } from "drizzle-orm";
 
 const app = express();
@@ -670,6 +670,52 @@ app.get("/api/admin/speed-balance", async (req, res) => {
     }
     res.json({ balanceUsd, balanceSats });
   } catch { res.status(500).json({ error: "Failed", balanceUsd: 0 }); }
+});
+
+// Pays out of the Speed wallet balance via a withdrawal link, which whoever holds it
+// redeems with their own Lightning-compatible wallet (Speed has no bank-transfer API).
+app.post("/api/admin/speed-withdraw", async (req, res) => {
+  const pw = adminAuth(req);
+  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const { amountUsd } = req.body as { amountUsd?: number };
+  if (!amountUsd || amountUsd <= 0) { res.status(400).json({ error: "Enter a valid amount" }); return; }
+
+  const r = await fetch(`${SPEED_API}/withdrawal-links`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: speedAuth(), "speed-version": "2022-04-15" },
+    body: JSON.stringify({ currency: "USD", amount: amountUsd }),
+  });
+  const link = await r.json() as { id?: string; url?: string; status?: string; errors?: unknown };
+  if (!r.ok || !link.id || !link.url) { res.status(500).json({ error: "Failed to create withdrawal link", details: link }); return; }
+
+  await db.insert(speedWithdrawalsTable).values({
+    id: link.id, amountUsd: String(amountUsd), url: link.url, status: (link.status as "active" | "paid" | "deactivated") ?? "active",
+  });
+  res.status(201).json({ id: link.id, url: link.url, amountUsd });
+});
+
+app.get("/api/admin/speed-withdrawals", async (req, res) => {
+  const pw = adminAuth(req);
+  if (!pw || !await verifyAdmin(pw)) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const rows = await db.select().from(speedWithdrawalsTable).orderBy(desc(speedWithdrawalsTable.createdAt)).limit(50);
+  // Refresh status for anything not yet resolved as paid, so the log reflects reality
+  // without the admin having to check Speed's dashboard separately.
+  for (const row of rows) {
+    if (row.status === "paid") continue;
+    try {
+      const r = await fetch(`${SPEED_API}/withdrawal-links/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
+      if (!r.ok) continue;
+      const link = await r.json() as { status?: string };
+      const newStatus = link.status as "active" | "paid" | "deactivated" | undefined;
+      if (newStatus && newStatus !== row.status) {
+        await db.update(speedWithdrawalsTable).set({ status: newStatus }).where(eq(speedWithdrawalsTable.id, row.id));
+        row.status = newStatus;
+      }
+    } catch { /* leave as last known status */ }
+  }
+
+  res.json(rows.map((r) => ({ ...r, amountUsd: parseFloat(String(r.amountUsd)), createdAt: r.createdAt.toISOString() })));
 });
 
 app.post("/api/admin/sync", async (req, res) => {

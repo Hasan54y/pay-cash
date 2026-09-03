@@ -72,6 +72,17 @@ export const contactMessagesTable = pgTable("contact_messages", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Admin-initiated payouts out of the Speed wallet balance, via Speed's withdrawal-link
+// API — the admin (or whoever holds the link) redeems it with their own Lightning
+// wallet. This table is just our own audit log of what was generated and its status.
+export const speedWithdrawalsTable = pgTable("speed_withdrawals", {
+  id: text("id").primaryKey(),
+  amountUsd: numeric("amount_usd", { precision: 10, scale: 2 }).notNull(),
+  url: text("url").notNull(),
+  status: text("status", { enum: ["active", "paid", "deactivated"] }).notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => usersTable.id),
