@@ -136,7 +136,7 @@ function HomeTab({ pw }: { pw: string }) {
   const [adminUsername, setAdminUsername] = useState("");
   const [copied, setCopied] = useState(false);
   const prevPaidCount = useRef(0);
-  const payLink = adminUsername ? `https://pay-cash.shop/pay/${adminUsername}` : `https://pay-cash.shop`;
+  const payLink = adminUsername ? `https://realcash.online/pay/${adminUsername}` : `https://realcash.online`;
 
   async function fetchData() {
     const r = await fetch("/api/admin/payments", { headers: { "x-admin-password": pw } });
@@ -225,7 +225,7 @@ function HomeTab({ pw }: { pw: string }) {
               </div>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
                 <p style={{ fontSize: 11, color: "var(--text-muted)", wordBreak: "break-all" }}>
-                  {adminUsername ? `pay-cash.shop/pay/${adminUsername}` : "Set username in Settings"}
+                  {adminUsername ? `realcash.online/pay/${adminUsername}` : "Set username in Settings"}
                 </p>
                 <button onClick={() => { navigator.clipboard.writeText(payLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn btn-dark" style={{ fontSize: 13, padding: "10px 0" }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -651,7 +651,7 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
             <div className="field">
               <label className="field-label">Username (your payment page URL)</label>
               <input className="input" value={settings.username} onChange={e => setSettings(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} placeholder="queen" />
-              {settings.username && <p className="hint">pay-cash.shop/pay/{settings.username}</p>}
+              {settings.username && <p className="hint">realcash.online/pay/{settings.username}</p>}
             </div>
             <div className="field"><label className="field-label">Recovery Email</label><input className="input" type="email" value={settings.email} onChange={e => setSettings(p => ({ ...p, email: e.target.value }))} /></div>
             <div className="field"><label className="field-label">New Password</label><input className="input" type="password" placeholder="Leave blank to keep" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
@@ -667,9 +667,9 @@ function SettingsTab({ pw, onLogout }: { pw: string; onLogout: () => void }) {
           <div className="card" style={{ padding: 16 }}>
             <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>Webhook URL</p>
             <div style={{ background: "var(--surface-alt)", borderRadius: 10, padding: "10px 12px", fontFamily: "monospace", fontSize: 12, wordBreak: "break-all", marginBottom: 8 }}>
-              https://www.pay-cash.shop/api/webhook/speed
+              https://www.realcash.online/api/webhook/speed
             </div>
-            <button type="button" onClick={() => navigator.clipboard.writeText("https://www.pay-cash.shop/api/webhook/speed")} className="btn btn-muted btn-sm">📋 Copy</button>
+            <button type="button" onClick={() => navigator.clipboard.writeText("https://www.realcash.online/api/webhook/speed")} className="btn btn-muted btn-sm">📋 Copy</button>
           </div>
           <button type="submit" disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
             {saving ? "Saving…" : "Save Settings"}

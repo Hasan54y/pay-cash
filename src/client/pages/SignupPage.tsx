@@ -80,7 +80,7 @@ export default function SignupPage() {
             <input className="input" type="text" placeholder="Display Name (for payment page title)" value={form.displayName} onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))} required />
             <div className="field">
               <input className="input" type="text" placeholder="Username (for payment page URL)" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") }))} required />
-              {form.username && <p className="hint" style={{ paddingLeft: 4 }}>pay-cash.shop/pay/{form.username}</p>}
+              {form.username && <p className="hint" style={{ paddingLeft: 4 }}>realcash.online/pay/{form.username}</p>}
             </div>
             <input className="input" type="password" placeholder="Password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={6} />
             {error && <p className="error-text">{error}</p>}

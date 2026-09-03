@@ -65,7 +65,7 @@ async function sendPushNotification(userId: string | null, title: string, body: 
     const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
     if (!vapidPublic || !vapidPrivate) return;
 
-    webpush.default.setVapidDetails("mailto:admin@pay-cash.shop", vapidPublic, vapidPrivate);
+    webpush.default.setVapidDetails("mailto:admin@realcash.online", vapidPublic, vapidPrivate);
 
     const query = userId
       ? db.select().from(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.userId, userId))
@@ -614,7 +614,7 @@ if (process.env.NODE_ENV === "production") {
       // Check if this is a payment page
       const payMatch = req.path.match(/^\/pay\/([a-z0-9_-]+)$/i);
       let displayName = (await getSetting("display_name")) ?? "Pay Cash";
-      let ogImageUrl = `https://pay-cash.shop/og-image.svg`;
+      let ogImageUrl = `https://realcash.online/og-image.svg`;
 
       if (payMatch) {
         const slug = payMatch[1];
@@ -622,7 +622,7 @@ if (process.env.NODE_ENV === "production") {
         const [user] = await db.select({ displayName: usersTable.displayName })
           .from(usersTable).where(and(eq(usersTable.username, slug), eq(usersTable.status, "active")));
         if (user) displayName = user.displayName;
-        ogImageUrl = `https://pay-cash.shop/og-image.svg?u=${slug}`;
+        ogImageUrl = `https://realcash.online/og-image.svg?u=${slug}`;
       }
 
       const title = `Enter amount and Pay ${displayName}`;
