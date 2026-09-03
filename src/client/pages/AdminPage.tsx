@@ -753,9 +753,9 @@ function SettingsTab({ pw, onLogout, setTab }: { pw: string; onLogout: () => voi
           <div className="card" style={{ padding: 16 }}>
             <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 10 }}>Webhook URL</p>
             <div style={{ background: "var(--surface-alt)", borderRadius: 10, padding: "10px 12px", fontFamily: "monospace", fontSize: 12, wordBreak: "break-all", marginBottom: 8 }}>
-              https://www.realcash.online/api/webhook/speed
+              https://realcash.online/api/webhook/speed
             </div>
-            <button type="button" onClick={() => navigator.clipboard.writeText("https://www.realcash.online/api/webhook/speed")} className="btn btn-muted btn-sm">📋 Copy</button>
+            <button type="button" onClick={() => navigator.clipboard.writeText("https://realcash.online/api/webhook/speed")} className="btn btn-muted btn-sm">📋 Copy</button>
           </div>
           <button type="submit" disabled={saving} className={`btn ${saving ? "btn-disabled-look" : "btn-primary"}`} style={{ color: "#fff" }}>
             {saving ? "Saving…" : "Save Settings"}
