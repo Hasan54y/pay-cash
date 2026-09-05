@@ -429,7 +429,7 @@ app.get("/api/dashboard/payments", async (req, res) => {
 
   const rows = await db.select().from(paymentsTable)
     .where(eq(paymentsTable.userId, user.id))
-    .orderBy(desc(paymentsTable.createdAt)).limit(100);
+    .orderBy(desc(paymentsTable.createdAt));
 
   const [totalRow] = await db.select({ total: sql<string>`coalesce(sum(${paymentsTable.amountUsd}::numeric),0)` })
     .from(paymentsTable).where(and(eq(paymentsTable.userId, user.id), eq(paymentsTable.status, "paid")));
@@ -546,7 +546,7 @@ app.get("/api/admin/payments", async (req, res) => {
   const rows = await db.select({
     payment: paymentsTable, user: { displayName: usersTable.displayName, username: usersTable.username }
   }).from(paymentsTable).leftJoin(usersTable, eq(paymentsTable.userId, usersTable.id))
-    .orderBy(desc(paymentsTable.createdAt)).limit(500);
+    .orderBy(desc(paymentsTable.createdAt));
 
   const [totalRow] = await db.select({ total: sql<string>`coalesce(sum(${paymentsTable.amountUsd}::numeric),0)` })
     .from(paymentsTable).where(eq(paymentsTable.status, "paid"));
