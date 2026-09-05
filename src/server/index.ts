@@ -124,18 +124,22 @@ async function markPaymentPaid(paymentId: string) {
 // next time anyone loads a payments list — no manual sync needed.
 async function reconcilePayments(userId?: string) {
   const staleCutoff = new Date(Date.now() - 10 * 60 * 1000);
-  const recheckWindow = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const recheckWindow = new Date(Date.now() - 6 * 60 * 60 * 1000);
   const scopeCondition = userId ? eq(paymentsTable.userId, userId) : undefined;
 
-  const candidates = await db.select().from(paymentsTable).where(and(
-    scopeCondition,
-    or(
-      and(eq(paymentsTable.status, "pending"), lt(paymentsTable.createdAt, staleCutoff)),
-      and(eq(paymentsTable.status, "expired"), gt(paymentsTable.createdAt, recheckWindow)),
-    ),
+  // Pending payments are the priority and must never be starved out — query them
+  // separately from the expired self-heal recheck (a much smaller, short window)
+  // instead of one combined query where a flood of expired rows could crowd out
+  // the one pending row that actually needs checking, silently, with no error.
+  const pendingCandidates = await db.select().from(paymentsTable).where(and(
+    scopeCondition, eq(paymentsTable.status, "pending"), lt(paymentsTable.createdAt, staleCutoff),
   )).limit(50);
+  const expiredRecheckCandidates = await db.select().from(paymentsTable).where(and(
+    scopeCondition, eq(paymentsTable.status, "expired"), gt(paymentsTable.createdAt, recheckWindow),
+  )).limit(20);
+  const candidates = [...pendingCandidates, ...expiredRecheckCandidates];
 
-  console.log(`reconcilePayments: ${candidates.length} candidate(s)${userId ? ` for user ${userId}` : ""}`);
+  console.log(`reconcilePayments: ${pendingCandidates.length} pending, ${expiredRecheckCandidates.length} expired-recheck${userId ? ` for user ${userId}` : ""}`);
 
   for (const row of candidates) {
     try {
