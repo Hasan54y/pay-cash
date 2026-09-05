@@ -138,7 +138,10 @@ async function reconcilePayments(userId?: string) {
   for (const row of candidates) {
     try {
       const r = await fetch(`${SPEED_API}/payments/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
-      if (!r.ok) continue;
+      if (!r.ok) {
+        console.error(`reconcilePayments: Speed lookup for ${row.id} returned ${r.status}: ${await r.text().catch(() => "")}`);
+        continue;
+      }
       const p = await r.json() as { status?: string };
       const speedStatus = (p.status ?? "").toLowerCase();
       if (["paid", "confirmed", "completed"].includes(speedStatus)) {
@@ -147,7 +150,7 @@ async function reconcilePayments(userId?: string) {
         await db.update(paymentsTable).set({ status: "expired" }).where(eq(paymentsTable.id, row.id));
       }
       // Anything else (still pending on Speed, or an unrecognized status): leave as-is and retry later.
-    } catch { /* Speed lookup failed; retry on the next reconcile pass */ }
+    } catch (e) { console.error(`reconcilePayments: lookup for ${row.id} threw`, e); }
   }
 }
 
@@ -415,7 +418,7 @@ app.get("/api/dashboard/payments", async (req, res) => {
 
   // Don't block the page load on Speed API round-trips — reconcile in the
   // background so this response stays fast; the next poll picks up any change.
-  reconcilePayments(user.id).catch(() => {});
+  reconcilePayments(user.id).catch((e) => console.error("reconcilePayments (dashboard) failed:", e));
 
   const rows = await db.select().from(paymentsTable)
     .where(eq(paymentsTable.userId, user.id))
@@ -531,7 +534,7 @@ app.get("/api/admin/payments", async (req, res) => {
 
   // Don't block the page load on Speed API round-trips — reconcile in the
   // background so this response stays fast; the next poll picks up any change.
-  reconcilePayments().catch(() => {});
+  reconcilePayments().catch((e) => console.error("reconcilePayments (admin) failed:", e));
 
   const rows = await db.select({
     payment: paymentsTable, user: { displayName: usersTable.displayName, username: usersTable.username }
