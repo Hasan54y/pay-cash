@@ -135,6 +135,8 @@ async function reconcilePayments(userId?: string) {
     ),
   )).limit(50);
 
+  console.log(`reconcilePayments: ${candidates.length} candidate(s)${userId ? ` for user ${userId}` : ""}`);
+
   for (const row of candidates) {
     try {
       const r = await fetch(`${SPEED_API}/payments/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
@@ -144,6 +146,7 @@ async function reconcilePayments(userId?: string) {
       }
       const p = await r.json() as { status?: string };
       const speedStatus = (p.status ?? "").toLowerCase();
+      console.log(`reconcilePayments: ${row.id} our_status=${row.status} speed_status=${speedStatus}`);
       if (["paid", "confirmed", "completed"].includes(speedStatus)) {
         await markPaymentPaid(row.id);
       } else if (speedStatus === "expired" && row.status === "pending") {
