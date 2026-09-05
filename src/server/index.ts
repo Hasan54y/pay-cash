@@ -141,23 +141,31 @@ async function reconcilePayments(userId?: string) {
 
   console.log(`reconcilePayments: ${pendingCandidates.length} pending, ${expiredRecheckCandidates.length} expired-recheck${userId ? ` for user ${userId}` : ""}`);
 
-  for (const row of candidates) {
-    try {
-      const r = await fetch(`${SPEED_API}/payments/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
-      if (!r.ok) {
-        console.error(`reconcilePayments: Speed lookup for ${row.id} returned ${r.status}: ${await r.text().catch(() => "")}`);
-        continue;
-      }
-      const p = await r.json() as { status?: string };
-      const speedStatus = (p.status ?? "").toLowerCase();
-      console.log(`reconcilePayments: ${row.id} our_status=${row.status} speed_status=${speedStatus}`);
-      if (["paid", "confirmed", "completed"].includes(speedStatus)) {
-        await markPaymentPaid(row.id);
-      } else if (speedStatus === "expired" && row.status === "pending") {
-        await db.update(paymentsTable).set({ status: "expired" }).where(eq(paymentsTable.id, row.id));
-      }
-      // Anything else (still pending on Speed, or an unrecognized status): leave as-is and retry later.
-    } catch (e) { console.error(`reconcilePayments: lookup for ${row.id} threw`, e); }
+  // Check candidates in parallel batches instead of one at a time — with up to 70
+  // candidates, a fully sequential loop stacks up round-trips to Speed and makes
+  // Sync feel slow. Bounded concurrency keeps it fast without hammering Speed's API
+  // with all 70 requests at once.
+  const CONCURRENCY = 10;
+  for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+    const batch = candidates.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(async (row) => {
+      try {
+        const r = await fetch(`${SPEED_API}/payments/${row.id}`, { headers: { Authorization: speedAuth(), "speed-version": "2022-04-15" } });
+        if (!r.ok) {
+          console.error(`reconcilePayments: Speed lookup for ${row.id} returned ${r.status}: ${await r.text().catch(() => "")}`);
+          return;
+        }
+        const p = await r.json() as { status?: string };
+        const speedStatus = (p.status ?? "").toLowerCase();
+        console.log(`reconcilePayments: ${row.id} our_status=${row.status} speed_status=${speedStatus}`);
+        if (["paid", "confirmed", "completed"].includes(speedStatus)) {
+          await markPaymentPaid(row.id);
+        } else if (speedStatus === "expired" && row.status === "pending") {
+          await db.update(paymentsTable).set({ status: "expired" }).where(eq(paymentsTable.id, row.id));
+        }
+        // Anything else (still pending on Speed, or an unrecognized status): leave as-is and retry later.
+      } catch (e) { console.error(`reconcilePayments: lookup for ${row.id} threw`, e); }
+    }));
   }
 }
 
